@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jony Lager - CliPremium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/estilo.css"> <style>
+        /* Estilos Específicos MÍNIMOS para la página clipremium.html si son necesarios */
+        .clipremium-container {
+            padding-top: calc(var(--separacion) / 2);
+            padding-bottom: var(--separacion);
+            min-height: calc(100vh - var(--header-height-desktop) - 150px); /* Ajustar 150px a la altura de tu footer */
+        }
+
+        @media (max-width: 768px) {
+            .clipremium-container {
+                min-height: calc(100vh - var(--header-height-mobile) - 120px);
+            }
+        }
+         #clipremium-login-section {
+            padding-bottom: var(--separacion); /* Espacio antes del footer si no hay galería */
+        }
+
+        /* Estilos para el formulario de login (ya deberían estar en estilo.css global o aquí) */
+        .login-form-wrapper { max-width: 450px; margin: 3rem auto; padding: 2.5rem 3rem; background-color: var(--color-secundario); border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .login-form-wrapper h2 { color: var(--color-acento); margin-bottom: 2rem; font-size: 2.8rem; }
+        .login-form-wrapper label { display: block; text-align: left; margin-bottom: 0.8rem; color: var(--color-texto-secundario); font-size: 1.5rem; font-weight: bold; }
+        .login-form-wrapper input[type="text"], .login-form-wrapper input[type="password"] { width: 100%; padding: 1.2rem 1.5rem; margin-bottom: 1.8rem; border: 1px solid #4a4a4a; border-radius: 6px; background-color: #383838; color: var(--color-texto-principal); font-size: 1.6rem; box-sizing: border-box; }
+        .login-form-wrapper input[type="text"]:focus, .login-form-wrapper input[type="password"]:focus { outline: none; border-color: var(--color-acento); box-shadow: 0 0 0 3px rgba(255,193,7,0.3); }
+        .login-form-wrapper button { display: inline-block; background-color: var(--color-acento); color: var(--color-primario); padding: 1.2rem 3rem; border: none; border-radius: 6px; font-family: var(--fuente-titulos); font-weight: 700; font-size: 1.7rem; text-transform: uppercase; cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; width: 100%; }
+        .login-form-wrapper button:hover { background-color: var(--color-acento-hover); transform: translateY(-2px); }
+        .login-form-wrapper button:disabled { background-color: #555; cursor: not-allowed; transform: translateY(0); }
+        .login-error-message { color: #ff6b6b; margin-top: 1.5rem; font-weight: bold; min-height: 1.5em; }
+    </style>
+</head>
+<body class="clipremium-body">
+
+    <header class="site-header">
+        <div class="contenedor contenido-header">
+            <div class="logo">
+                <a href="index.html"><img src="img/logojonylager.png" alt="Logo Jony Lager"></a>
+            </div>
+            <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="navegacionPrincipalPageClipremium">
+                <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+            </button>
+            <nav class="navegacion-principal" id="navegacionPrincipalPageClipremium">
+                <a href="index.html">Inicio</a>
+                <a href="servicios.html">Servicios</a>
+                <a href="promociones.html">Promociones</a>
+                <a href="clipremium.html" class="activo">CliPremium</a>
+                <a href="contactanos.html">Contáctanos</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="contenedor contenido-principal clipremium-container">
+        <section id="clipremium-login-section">
+            <div class="login-form-wrapper">
+                <h2>Acceso Exclusivo Clientes</h2>
+                <form id="loginClienteForm">
+                    <div>
+                        <label for="nombreUsuarioGaleria">Usuario de Galería:</label>
+                        <input type="text" id="nombreUsuarioGaleria" name="nombreUsuarioGaleria" required autocomplete="off">
+                    </div>
+                    <div>
+                        <label for="codigoAccesoGaleria">Código de Acceso:</label>
+                        <input type="password" id="codigoAccesoGaleria" name="codigoAccesoGaleria" required>
+                    </div>
+                    <button type="submit">Ingresar a mi Galería</button>
+                    <p id="loginErrorMessage" class="login-error-message"></p>
+                </form>
+            </div>
+        </section>
+
+        <section id="clipremium-gallery-section" style="display:none;">
+            <h2 id="gallery-title-premium">Tu Galería Privada</h2>
+            <div id="gallery-container-premium" class="galeria-grid">
+                </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+         <div class="contenedor contenido-footer">
+            <p>&copy; <span id="currentYearClipremium">2025</span> Jony Lager - Fotografía Exclusiva. Todos los derechos reservados.</p>
+            <p>Arequipa, Perú.</p>
+        </div>
+    </footer>
+
+    <div id="lightbox" class="lightbox">
+        <span class="cerrar-lightbox">&times;</span>
+        <span class="lightbox-control prev hidden">&#10094;</span>
+        <span class="lightbox-control next hidden">&#10095;</span>
+        <div class="lightbox-content">
+            <img id="imagen-lightbox" src="" alt="Imagen ampliada">
+            <div id="titulo-lightbox" class="titulo-lightbox"></div>
+            <div id="editor-toolbar" class="editor-toolbar"> <button class="tool-button" id="tool-brightness" title="Brillo">
+                    <svg viewBox="0 0 24 24" fill="currentColor"> <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zM12 4V2M4.93 4.93l-1.41-1.41M20 12h2M4.93 19.07l-1.41 1.41M12 20v2M19.07 19.07l1.41-1.41M6.34 12H4.22m15.44 0h-2.12"/> </svg>
+                    <span>Brillo</span>
+                </button>
+                <div class="slider-container" id="brightness-slider-container">
+                    <input type="range" min="50" max="150" value="100" class="effect-slider" id="brightness-slider"> <span id="brightness-value">100%</span>
+                </div>
+                <button class="tool-button" id="tool-contrast" title="Contraste">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6V6z"></path></svg>
+                    <span>Contraste</span>
+                </button>
+                <div class="slider-container" id="contrast-slider-container">
+                    <input type="range" min="50" max="200" value="100" class="effect-slider" id="contrast-slider">
+                    <span id="contrast-value">100%</span>
+                </div>
+
+                <button class="tool-button" id="tool-saturation" title="Saturación">
+                     <svg viewBox="0 0 24 24"><path d="M12 .9C5.88.9.9 5.88.9 12s4.98 11.1 11.1 11.1S23.1 18.12 23.1 12 .9 5.88.9 12zm0 2C6.98 2.9.9 8.98.9 12s2.02 9.1 9.1 9.1 9.1-2.02 9.1-9.1S17.02 2.9 12 2.9zm-.9 5.58c-1.68 0-3.04 1.36-3.04 3.04s1.36 3.04 3.04 3.04c1.1 0 2.08-.58 2.62-1.46l-1.48-.88c-.24.48-.72.8-1.14.8-.8 0-1.46-.66-1.46-1.46s.66-1.46 1.46-1.46c.42 0 .9.32 1.14.8l1.48-.88C13.18 9.06 12.2 8.48 11.1 8.48z"></path></svg>
+                    <span>Saturación</span>
+                </button>
+                <div class="slider-container" id="saturation-slider-container">
+                    <input type="range" min="0" max="200" value="100" class="effect-slider" id="saturation-slider">
+                    <span id="saturation-value">100%</span>
+                </div>
+                
+                <button class="tool-button" id="tool-filters" title="Filtros">
+                    <svg viewBox="0 0 24 24"><path d="M10.08 0C4.51 0 0 4.51 0 10.08s4.51 10.08 10.08 10.08S20.16 15.65 20.16 10.08 15.65 0 10.08 0zm0 18.14A8.07 8.07 0 1110.08 2a8.07 8.07 0 010 16.14zM5.04 5.04h10.08v2.02H5.04V5.04zm0 4.03h10.08v2.02H5.04v-2.02zm0 4.04h6.05v2.01H5.04v-2.01z"></path></svg>
+                    <span>Filtros</span>
+                </button>
+                <div class="filters-panel" id="filters-panel-container">
+                    <button class="filter-option active-filter" data-filter="original">Original</button>
+                    <button class="filter-option" data-filter="grayscale">B&N</button>
+                    <button class="filter-option" data-filter="bw_intenso">B&N Intenso</button>
+                    <button class="filter-option" data-filter="sepia">Sepia</button>
+                    <button class="filter-option" data-filter="calido">Cálido</button>
+                    <button class="filter-option" data-filter="frio">Frío</button>
+                    <button class="filter-option" data-filter="vintage_suave">Vintage</button>
+                    <button class="filter-option" data-filter="kodak_gold">Kodak Gold</button>
+                    <button class="filter-option" data-filter="mate_look">Mate</button>
+                    <button class="filter-option" data-filter="aden_filter">Aden</button>
+                    <button class="filter-option" data-filter="valencia_filter">Valencia</button>
+                    <button class="filter-option" data-filter="teal_orange">Teal & Orange</button>
+                    <button class="filter-option" data-filter="noir_look">Noir</button>
+                    <button class="filter-option" data-filter="cinematic_look">Cinematic</button>
+                    </div>
+                
+                <button class="tool-button" id="tool-reset" title="Restablecer">
+                    <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"></path></svg>
+                    <span>Restablecer</span>
+                </button>
+                 <button class="tool-button" id="lightbox-download-button" title="Descargar Imagen Editada">
+                    <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"></path></svg>
+                    <span>Descargar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script> <script>
+        // JavaScript específico para clipremium.html (para login y carga de galería)
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('loginClienteForm');
+            const loginSection = document.getElementById('clipremium-login-section');
+            const gallerySection = document.getElementById('clipremium-gallery-section');
+            const galleryContainer = document.getElementById('gallery-container-premium');
+            const galleryTitleElement = document.getElementById('gallery-title-premium');
+            const loginErrorMessageElement = document.getElementById('loginErrorMessage');
+            
+            const currentYearSpanClipremium = document.getElementById('currentYearClipremium');
+            if (currentYearSpanClipremium) {
+                currentYearSpanClipremium.textContent = new Date().getFullYear();
+            }
+
+            // La lógica del menú hamburguesa es manejada por script.js global
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    loginErrorMessageElement.textContent = '';
+                    loginErrorMessageElement.style.display = 'none';
+
+                    const nombreUsuario = document.getElementById('nombreUsuarioGaleria').value.trim();
+                    const codigoAcceso = document.getElementById('codigoAccesoGaleria').value.trim();
+
+                    if (!nombreUsuario || !codigoAcceso) {
+                        loginErrorMessageElement.textContent = 'Por favor, ingresa tu usuario y código.';
+                        loginErrorMessageElement.style.display = 'block';
+                        return;
+                    }
+
+                    const submitButton = loginForm.querySelector('button[type="submit"]');
+                    const originalButtonText = submitButton.textContent;
+                    submitButton.textContent = 'Verificando...';
+                    submitButton.disabled = true;
+
+                    try {
+                        const response = await fetch('/acceder-galeria-privada', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                nombre_usuario_galeria: nombreUsuario,
+                                codigo_acceso_galeria: codigoAcceso
+                            }),
+                        });
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            loginSection.style.display = 'none';
+                            gallerySection.style.display = 'block';
+                            galleryTitleElement.textContent = data.tituloGaleria || "Tu Galería de Recuerdos";
+                            displayImages(data.imagenes);
+                        } else {
+                            loginErrorMessageElement.textContent = data.message || 'Error de acceso. Verifica tus credenciales.';
+                            loginErrorMessageElement.style.display = 'block';
+                        }
+                    } catch (error) {
+                        console.error('Error en el proceso de login:', error);
+                        loginErrorMessageElement.textContent = 'No se pudo conectar con el servidor. Intenta más tarde.';
+                        loginErrorMessageElement.style.display = 'block';
+                    } finally {
+                        submitButton.textContent = originalButtonText;
+                        submitButton.disabled = false;
+                    }
+                });
+            }
+
+            function displayImages(imagenes) {
+                galleryContainer.innerHTML = '';
+                if (!imagenes || imagenes.length === 0) {
+                    galleryContainer.innerHTML = '<p style="color: var(--color-texto-secundario); font-size: 1.8rem;">No hay imágenes disponibles en esta galería.</p>';
+                    return;
+                }
+
+                imagenes.forEach((imgData, index) => {
+                    let viewUrl = typeof imgData === 'string' ? imgData : imgData.viewUrl;
+                    let downloadUrl = typeof imgData === 'string' ? imgData : (imgData.downloadUrl || viewUrl);
+                    let fileName = typeof imgData === 'string' ? `foto_cliente_${index + 1}.jpg` : (imgData.originalName || `foto_cliente_${index + 1}.jpg`);
+                    let title = `Foto ${index + 1}` + (imgData.originalName ? ` - ${imgData.originalName}` : '');
+
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'item-galeria'; 
+
+                    const lightboxLink = document.createElement('a');
+                    lightboxLink.href = viewUrl;
+                    lightboxLink.setAttribute('data-lightbox', 'clipremium-gallery'); 
+                    lightboxLink.setAttribute('data-title', title);
+
+                    const imgElement = document.createElement('img');
+                    imgElement.src = viewUrl; 
+                    imgElement.alt = title;
+                    imgElement.onerror = () => { 
+                        imgElement.alt = "Error al cargar imagen"; 
+                        imgElement.style.display = 'none'; 
+                        const errorText = document.createElement('p');
+                        errorText.textContent = 'Error al cargar';
+                        errorText.style.color = 'var(--color-texto-secundario)';
+                        lightboxLink.appendChild(errorText);
+                    };
+
+                    lightboxLink.appendChild(imgElement);
+                    itemDiv.appendChild(lightboxLink);
+
+                    const downloadWrapper = document.createElement('div');
+                    downloadWrapper.className = 'download-button-wrapper';
+
+                    const downloadLinkElement = document.createElement('a');
+                    downloadLinkElement.href = downloadUrl;
+                    downloadLinkElement.className = 'download-button';
+                    downloadLinkElement.setAttribute('download', fileName);
+                    downloadLinkElement.innerHTML = `
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="margin-right: 8px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"></path></svg>
+                        Descargar
+                    `;
+                    downloadWrapper.appendChild(downloadLinkElement);
+                    itemDiv.appendChild(downloadWrapper);
+                    galleryContainer.appendChild(itemDiv);
+                });
+
+                if (typeof window.inicializarLightboxGlobal === 'function') {
+                    window.inicializarLightboxGlobal('#gallery-container-premium a[data-lightbox="clipremium-gallery"]');
+                } else {
+                    console.warn('Función global inicializarLightboxGlobal no encontrada.');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

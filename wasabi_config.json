@@ -1,0 +1,7 @@
+{
+    "WASABI_ACCESS_KEY_ID": "YIK5OAFQAEJABE8O57B3",
+    "WASABI_SECRET_ACCESS_KEY": "zc8zF7EGeiP5y2cGBDnVBVwAazVb2PTROKWeg5CL",
+    "WASABI_REGION": "us-central-1",
+    "WASABI_ENDPOINT": "https://s3.us-central-1.wasabisys.com",
+    "WASABI_BUCKET_NAME": "jonylager-clipremium-wasabi"
+}
