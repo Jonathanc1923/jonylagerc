@@ -134,7 +134,7 @@ img {
 
 /* Hero Section */
 .hero {
-    background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('../img/fotosgaleria/hero_background.jpg');
+    background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('../img/fotosgaleria/app-3.jpg');
     background-size: cover;
     background-position: center center;
     background-attachment: fixed;
