@@ -13,14 +13,16 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest"> <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#ffc107"> <link rel="shortcut icon" href="/favicon.ico">
-    <meta name="msapplication-TileColor" content="#1a1a1a"> <meta name="msapplication-config" content="/browserconfig.xml"> <meta name="theme-color" content="#1a1a1a"> <link rel="stylesheet" href="css/estilo.css">
+    <meta name="msapplication-TileColor" content="#1a1a1a"> 
+    <meta name="msapplication-config" content="/browserconfig.xml"> <meta name="theme-color" content="#1a1a1a">
+    <link rel="stylesheet" href="css/estilo.css">
 
     <style>
         /* Estilos Específicos para la página clipremium.html */
         .clipremium-container {
             padding-top: calc(var(--separacion) / 2);
             padding-bottom: var(--separacion);
-            min-height: calc(100vh - var(--header-height-desktop) - 150px); /* Ajustar 150px a la altura de tu footer */
+            min-height: calc(100vh - var(--header-height-desktop) - 150px);
         }
 
         @media (max-width: 768px) {
@@ -29,14 +31,13 @@
             }
         }
         #clipremium-login-section {
-            text-align: center; /* Centrar el form wrapper */
-            padding-bottom: var(--separacion); /* Espacio antes del footer si no hay galería */
+            text-align: center;
+            padding-bottom: var(--separacion);
         }
         #clipremium-gallery-section {
-            text-align: center; /* Centrar el título de la galería */
+            text-align: center;
         }
 
-        /* Estilos para el formulario de login */
         .login-form-wrapper { max-width: 450px; margin: 3rem auto; padding: 2.5rem 3rem; background-color: var(--color-secundario); border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); text-align: center; }
         .login-form-wrapper h2 { color: var(--color-acento); margin-bottom: 2rem; font-size: 2.8rem; }
         .login-form-wrapper label { display: block; text-align: left; margin-bottom: 0.8rem; color: var(--color-texto-secundario); font-size: 1.5rem; font-weight: bold; }
@@ -47,48 +48,85 @@
         .login-form-wrapper button:disabled { background-color: #555; cursor: not-allowed; transform: translateY(0); }
         .login-error-message { color: #ff6b6b; margin-top: 1.5rem; font-weight: bold; min-height: 1.5em; }
 
-        /* --- Estilos para el título de la barra de herramientas de edición --- */
+        /* --- Estilos para el título y botones de la barra de herramientas de edición --- */
+        #editor-toolbar { 
+            align-items: center !important; 
+            gap: 12px !important; /* AUMENTADO el espacio entre todos los elementos de la barra */
+            padding: 10px 12px !important; /* Un poco más de padding general para la barra */
+        }
+
         .toolbar-title {
             display: flex;
             align-items: center;
-            padding: 0px 8px; 
+            padding: 0px 10px; /* Un poco más de padding interno para el título */
             color: var(--color-acento); 
             font-family: var(--fuente-parrafos); 
-            font-size: 1.4rem; 
+            font-size: 1.5rem; /* AUMENTADO tamaño de fuente del título */
             font-weight: bold;
             white-space: nowrap; 
-            margin-right: auto; /* Empuja los botones de herramientas a la derecha */
+            margin-right: auto; 
         }
 
         .toolbar-title-icon {
-            width: 20px;
-            height: 20px;
+            width: 22px; /* AUMENTADO tamaño del icono del título */
+            height: 22px; /* AUMENTADO tamaño del icono del título */
             fill: currentColor; 
-            margin-right: 6px; 
+            margin-right: 8px; /* AUMENTADO espacio del icono del título */
         }
 
         .toolbar-title-text {
             line-height: 1; 
         }
 
-        #editor-toolbar { 
-            align-items: center !important; 
+        /* Sobrescribir o definir estilos para .tool-button específicamente para esta página si es necesario */
+        /* Estos estilos modificarán los de estilo.css para los botones dentro de #editor-toolbar */
+        #editor-toolbar .tool-button {
+            padding: 8px; /* AUMENTADO padding del botón */
+            font-size: 1.1rem; /* AUMENTADO tamaño de fuente del texto del botón */
+            min-width: 70px; /* AUMENTADO ancho mínimo del botón */
+        }
+        #editor-toolbar .tool-button svg {
+            width: 24px; /* AUMENTADO tamaño del icono del botón */
+            height: 24px; /* AUMENTADO tamaño del icono del botón */
+            margin-bottom: 4px; /* Un poco más de espacio bajo el icono */
+        }
+        #editor-toolbar .tool-button span {
+             /* El span ya se oculta en móvil por estilo.css, aquí podemos asegurar visibilidad en desktop */
+            display: inline;
         }
 
+
         @media (max-width: 768px) { 
+            #editor-toolbar {
+                gap: 6px !important; /* Ajustar gap para pantallas medianas */
+                padding: 8px 10px !important;
+            }
             .toolbar-title {
-                font-size: 1.3rem;
+                font-size: 1.3rem; /* Mantenemos el ajuste previo */
                 padding: 0px 4px;
             }
             .toolbar-title-icon {
-                width: 18px;
+                width: 18px; /* Mantenemos el ajuste previo */
                 height: 18px;
             }
+            /* Los estilos de .tool-button y su svg para 768px ya están en estilo.css global */
+            /* Si necesitas que sean más grandes aquí específicamente, puedes añadir: */
+            /* #editor-toolbar .tool-button { min-width: 50px; padding: 6px;} */
+            /* #editor-toolbar .tool-button svg { width: 20px; height: 20px; } */
         }
+
         @media (max-width: 480px) {
              .toolbar-title {
                 margin-right: 8px; 
-            }
+                /* font-size: 1.2rem;  */ /* Ligeramente más pequeño si es necesario */
+                /* Si quieres ocultar el texto y dejar solo el icono en pantallas muy pequeñas: */
+                /* .toolbar-title-text { display: none; } */
+             }
+             #editor-toolbar {
+                gap: 4px !important; /* Ajustar gap para pantallas pequeñas */
+             }
+             /* Los estilos de .tool-button y su svg para 480px ya están en estilo.css global */
+             /* #editor-toolbar .tool-button { min-width: 45px; } */
         }
     </style>
 </head>
