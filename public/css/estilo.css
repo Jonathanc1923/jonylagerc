@@ -174,7 +174,7 @@ img {
     gap: 2.5rem;
 }
 
-.item-galeria { /* Estilos para los items de galería (aplica a .premium-gallery-item también si usas esa clase en JS) */
+.item-galeria {
     position: relative;
     overflow: hidden;
     border-radius: 10px;
@@ -203,7 +203,7 @@ img {
 .item-galeria img {
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain; /* Muestra la imagen completa, no la corta */
+    object-fit: contain; 
     display: block;
     margin: auto;
     border-radius: 6px;
@@ -213,7 +213,7 @@ img {
     opacity: 0.85;
 }
 
-/* Botón de Descarga en MINIATURAS (Visible por defecto como solicitaste) */
+/* Botón de Descarga en MINIATURAS */
 .download-button-wrapper {
     position: absolute; bottom: 10px; right: 10px; z-index: 5;
 }
@@ -221,13 +221,10 @@ img {
     background-color: var(--color-acento); color: var(--color-primario) !important;
     padding: 8px 12px; border: none; border-radius: 20px;
     cursor: pointer; text-decoration: none; font-size: 1.3rem; font-weight: bold;
-    /* opacity: 0; */ /* Comentado para que sea visible por defecto */
-    /* transform: translateY(10px); */ /* Comentado */
     transition: background-color 0.2s ease, transform 0.2s ease;
     display: inline-flex; align-items: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
-/* Ya no se necesita el :hover en el item para mostrarlo, pero sí para el efecto del botón */
 .download-button:hover {
     background-color: var(--color-acento-hover);
     transform: scale(1.05); 
@@ -293,7 +290,9 @@ img {
     position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
     background-color: rgba(35, 35, 35, 0.9); padding: 8px 10px; border-radius: 8px;
     display: none; /* OCULTO POR DEFECTO GLOBALMENTE, JS LO MUESTRA SELECTIVAMENTE */
-    gap: 8px; z-index: 1003; align-items: flex-end;
+    gap: 8px; z-index: 1003; 
+    /* align-items: flex-end; <-- CAMBIADO a center para el nuevo título */
+    align-items: center; /* Para mejor alineación vertical del título y los botones */
     box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
 }
 .tool-button {
@@ -305,6 +304,31 @@ img {
 .tool-button svg { width: 22px; height: 22px; fill: currentColor; margin-bottom: 3px; }
 .tool-button:hover, .tool-button.active { background-color: var(--color-acento); color: var(--color-primario); }
 .tool-button:hover svg, .tool-button.active svg { fill: var(--color-primario); }
+
+/* --- NUEVOS ESTILOS: Título de la Barra de Herramientas de Edición --- */
+.toolbar-title {
+    display: flex;
+    align-items: center;
+    padding: 0px 8px; 
+    color: var(--color-acento); 
+    font-family: var(--fuente-parrafos); 
+    font-size: 1.4rem; 
+    font-weight: bold;
+    white-space: nowrap; 
+    margin-right: auto; /* Empuja los botones de herramientas a la derecha */
+}
+
+.toolbar-title-icon {
+    width: 20px;
+    height: 20px;
+    fill: currentColor; 
+    margin-right: 6px; 
+}
+
+.toolbar-title-text {
+    line-height: 1; 
+}
+/* --- FIN DE NUEVOS ESTILOS --- */
 
 .slider-container, .filters-panel {
     position: absolute; bottom: calc(100% + 8px); 
@@ -379,8 +403,20 @@ img {
 
     .editor-toolbar { padding: 6px; gap: 4px; width: calc(100% - 10px); bottom: 5px; }
     .tool-button svg { width: 18px; height: 18px; }
-    .tool-button span { font-size: 0.9rem; display: none; }
+    .tool-button span { font-size: 0.9rem; display: none; } /* Ocultar texto de botones en móviles */
     .tool-button { min-width: 45px; padding: 5px; }
+
+    /* --- NUEVOS ESTILOS (MEDIA QUERY): Título de la Barra de Herramientas --- */
+    .toolbar-title {
+        font-size: 1.3rem;
+        padding: 0px 4px;
+    }
+    .toolbar-title-icon {
+        width: 18px;
+        height: 18px;
+    }
+    /* --- FIN DE NUEVOS ESTILOS (MEDIA QUERY) --- */
+
     .slider-container, .filters-panel { padding: 8px; }
 
     .site-footer p { font-size: 1.3rem; }
@@ -399,5 +435,14 @@ img {
     .lightbox-control { display: none !important; }
     .editor-toolbar { flex-wrap: wrap; justify-content: center; bottom: 5px; }
     .tool-button { min-width: 40px; }
+
+    /* --- NUEVOS ESTILOS (MEDIA QUERY): Título de la Barra de Herramientas --- */
+    .toolbar-title {
+        margin-right: 8px; /* Ajuste si el texto se oculta y solo queda el icono */
+        /* Podrías ocultar el texto aquí: */
+        /* .toolbar-title-text { display: none; } */
+    }
+    /* --- FIN DE NUEVOS ESTILOS (MEDIA QUERY) --- */
+
     .slider-container, .filters-panel { width: calc(100% - 20px); left: 10px; transform: translateX(0); bottom: calc(100% + 5px); }
 }

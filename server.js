@@ -229,8 +229,13 @@ app.post('/procesar-y-descargar-imagen', async (req, res) => {
                 case 'cinematic_look': imageProcessor = imageProcessor.sharpen(0.3); break;
             }
         }
-        if (appliedGrayscale) imageProcessor = imageProcessor.grayscale();
-        else if (appliedSepia) imageProcessor = imageProcessor.sepia(); // Sharp sí tiene .sepia()
+        if (appliedGrayscale) {
+        imageProcessor = imageProcessor.grayscale();
+    } else if (appliedSepia) {
+        // Para un efecto sepia, primero se suele convertir a escala de grises y luego se tiñe.
+        // Estos valores RGB para el tinte son un ejemplo común para sepia.
+        imageProcessor = imageProcessor.grayscale().tint({ r: 112, g: 66, b: 20 });
+    }
 
         console.log("Backend: Todas las ediciones aplicadas con Sharp.");
         const processedImageBuffer = await imageProcessor.jpeg({ quality: 90 }).toBuffer();

@@ -4,11 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jony Lager - CliPremium</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/estilo.css"> <style>
-        /* Estilos Específicos MÍNIMOS para la página clipremium.html si son necesarios */
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest"> <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#ffc107"> <link rel="shortcut icon" href="/favicon.ico">
+    <meta name="msapplication-TileColor" content="#1a1a1a"> <meta name="msapplication-config" content="/browserconfig.xml"> <meta name="theme-color" content="#1a1a1a"> <link rel="stylesheet" href="css/estilo.css">
+
+    <style>
+        /* Estilos Específicos para la página clipremium.html */
         .clipremium-container {
             padding-top: calc(var(--separacion) / 2);
             padding-bottom: var(--separacion);
@@ -20,12 +28,16 @@
                 min-height: calc(100vh - var(--header-height-mobile) - 120px);
             }
         }
-         #clipremium-login-section {
+        #clipremium-login-section {
+            text-align: center; /* Centrar el form wrapper */
             padding-bottom: var(--separacion); /* Espacio antes del footer si no hay galería */
         }
+        #clipremium-gallery-section {
+            text-align: center; /* Centrar el título de la galería */
+        }
 
-        /* Estilos para el formulario de login (ya deberían estar en estilo.css global o aquí) */
-        .login-form-wrapper { max-width: 450px; margin: 3rem auto; padding: 2.5rem 3rem; background-color: var(--color-secundario); border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        /* Estilos para el formulario de login */
+        .login-form-wrapper { max-width: 450px; margin: 3rem auto; padding: 2.5rem 3rem; background-color: var(--color-secundario); border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); text-align: center; }
         .login-form-wrapper h2 { color: var(--color-acento); margin-bottom: 2rem; font-size: 2.8rem; }
         .login-form-wrapper label { display: block; text-align: left; margin-bottom: 0.8rem; color: var(--color-texto-secundario); font-size: 1.5rem; font-weight: bold; }
         .login-form-wrapper input[type="text"], .login-form-wrapper input[type="password"] { width: 100%; padding: 1.2rem 1.5rem; margin-bottom: 1.8rem; border: 1px solid #4a4a4a; border-radius: 6px; background-color: #383838; color: var(--color-texto-principal); font-size: 1.6rem; box-sizing: border-box; }
@@ -34,6 +46,50 @@
         .login-form-wrapper button:hover { background-color: var(--color-acento-hover); transform: translateY(-2px); }
         .login-form-wrapper button:disabled { background-color: #555; cursor: not-allowed; transform: translateY(0); }
         .login-error-message { color: #ff6b6b; margin-top: 1.5rem; font-weight: bold; min-height: 1.5em; }
+
+        /* --- Estilos para el título de la barra de herramientas de edición --- */
+        .toolbar-title {
+            display: flex;
+            align-items: center;
+            padding: 0px 8px; 
+            color: var(--color-acento); 
+            font-family: var(--fuente-parrafos); 
+            font-size: 1.4rem; 
+            font-weight: bold;
+            white-space: nowrap; 
+            margin-right: auto; /* Empuja los botones de herramientas a la derecha */
+        }
+
+        .toolbar-title-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor; 
+            margin-right: 6px; 
+        }
+
+        .toolbar-title-text {
+            line-height: 1; 
+        }
+
+        #editor-toolbar { 
+            align-items: center !important; 
+        }
+
+        @media (max-width: 768px) { 
+            .toolbar-title {
+                font-size: 1.3rem;
+                padding: 0px 4px;
+            }
+            .toolbar-title-icon {
+                width: 18px;
+                height: 18px;
+            }
+        }
+        @media (max-width: 480px) {
+             .toolbar-title {
+                margin-right: 8px; 
+            }
+        }
     </style>
 </head>
 <body class="clipremium-body">
@@ -96,13 +152,23 @@
         <div class="lightbox-content">
             <img id="imagen-lightbox" src="" alt="Imagen ampliada">
             <div id="titulo-lightbox" class="titulo-lightbox"></div>
-            <div id="editor-toolbar" class="editor-toolbar"> <button class="tool-button" id="tool-brightness" title="Brillo">
+            
+            <div id="editor-toolbar" class="editor-toolbar">
+                <div class="toolbar-title">
+                    <svg class="toolbar-title-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12.83 2.16L8.89 6.1L7.48 4.68L11.41 0.75C11.79 0.36 12.41 0.36 12.8 0.75L13.5 1.46C13.9 1.85 13.9 2.47 13.5 2.86L12.83 2.16ZM14.95 3.58L12.83 5.7L18.3 11.17L20.42 9.05C22.63 6.84 20.05 3.58 17.56 3.58C16.72 3.58 15.77 3.68 14.95 3.58ZM2.49 14.13L7.67 8.96L12.83 14.13L11.41 15.54L6.25 10.38L1.08 15.54C0.3 16.32 0.3 17.58 1.08 18.36L2.49 19.78C3.27 20.56 4.53 20.56 5.31 19.78L10.47 14.62L9.06 13.2L3.9 18.36C3.51 18.75 2.88 18.75 2.49 18.36L1.08 16.95C0.69 16.56 0.69 15.93 1.08 15.54L2.49 14.13ZM19.78 12.59L14.21 18.16L15.62 19.57L21.19 14C21.19 14 21.19 13.79 21.19 13.79C21.19 13.29 20.78 12.59 19.78 12.59Z M5.5 21H18.5C18.5 22.1 17.6 23 16.5 23H7.5C6.4 23 5.5 22.1 5.5 21Z"/>
+                    </svg>
+                    <span class="toolbar-title-text">¡Personaliza tu foto!</span>
+                </div>
+
+                <button class="tool-button" id="tool-brightness" title="Brillo">
                     <svg viewBox="0 0 24 24" fill="currentColor"> <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zM12 4V2M4.93 4.93l-1.41-1.41M20 12h2M4.93 19.07l-1.41 1.41M12 20v2M19.07 19.07l1.41-1.41M6.34 12H4.22m15.44 0h-2.12"/> </svg>
                     <span>Brillo</span>
                 </button>
                 <div class="slider-container" id="brightness-slider-container">
                     <input type="range" min="50" max="150" value="100" class="effect-slider" id="brightness-slider"> <span id="brightness-value">100%</span>
                 </div>
+
                 <button class="tool-button" id="tool-contrast" title="Contraste">
                     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6V6z"></path></svg>
                     <span>Contraste</span>
@@ -140,7 +206,7 @@
                     <button class="filter-option" data-filter="teal_orange">Teal & Orange</button>
                     <button class="filter-option" data-filter="noir_look">Noir</button>
                     <button class="filter-option" data-filter="cinematic_look">Cinematic</button>
-                    </div>
+                </div>
                 
                 <button class="tool-button" id="tool-reset" title="Restablecer">
                     <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"></path></svg>
@@ -154,7 +220,8 @@
         </div>
     </div>
 
-    <script src="js/script.js"></script> <script>
+    <script src="js/script.js"></script>
+    <script>
         // JavaScript específico para clipremium.html (para login y carga de galería)
         document.addEventListener('DOMContentLoaded', () => {
             const loginForm = document.getElementById('loginClienteForm');
@@ -168,8 +235,6 @@
             if (currentYearSpanClipremium) {
                 currentYearSpanClipremium.textContent = new Date().getFullYear();
             }
-
-            // La lógica del menú hamburguesa es manejada por script.js global
 
             if (loginForm) {
                 loginForm.addEventListener('submit', async (event) => {
@@ -206,6 +271,10 @@
                             loginSection.style.display = 'none';
                             gallerySection.style.display = 'block';
                             galleryTitleElement.textContent = data.tituloGaleria || "Tu Galería de Recuerdos";
+                            if (data.idAcceso) { 
+                                window.idAccesoGaleriaCliente = data.idAcceso;
+                                console.log("ID de Acceso guardado:", window.idAccesoGaleriaCliente);
+                            }
                             displayImages(data.imagenes);
                         } else {
                             loginErrorMessageElement.textContent = data.message || 'Error de acceso. Verifica tus credenciales.';
@@ -235,7 +304,6 @@
                     let fileName = typeof imgData === 'string' ? `foto_cliente_${index + 1}.jpg` : (imgData.originalName || `foto_cliente_${index + 1}.jpg`);
                     let title = `Foto ${index + 1}` + (imgData.originalName ? ` - ${imgData.originalName}` : '');
 
-
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'item-galeria'; 
 
@@ -243,6 +311,8 @@
                     lightboxLink.href = viewUrl;
                     lightboxLink.setAttribute('data-lightbox', 'clipremium-gallery'); 
                     lightboxLink.setAttribute('data-title', title);
+                    lightboxLink.setAttribute('data-original-wasabi-url', viewUrl); 
+                    lightboxLink.setAttribute('data-original-name', fileName);
 
                     const imgElement = document.createElement('img');
                     imgElement.src = viewUrl; 
