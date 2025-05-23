@@ -119,8 +119,6 @@ function resetImageAdjustments() {
     applyCssFiltersToLightboxImage();
     console.log("Ajustes reseteados. currentLightboxFilters:", JSON.stringify(currentLightboxFilters));
     
-    // Registrar solo si el filtro activo anterior no era ya 'original'
-    // o si algún valor de slider ha cambiado significativamente del estado "original" por defecto
     if (nombreFiltroActivoAnterior !== 'original' || 
         (parseFloat(JSON.parse(filtroAnteriorParaLog).brightness) !== 100 ||
          parseFloat(JSON.parse(filtroAnteriorParaLog).contrast) !== 100 ||
@@ -156,7 +154,7 @@ function mostrarImagenLightbox(indice) {
     if (!enlaceActual) return;
 
     currentOriginalWasabiUrlForLightbox = enlaceActual.getAttribute('data-original-wasabi-url') || enlaceActual.getAttribute('href');
-    if (typeof window.idAccesoGaleriaCliente !== 'undefined') { // Capturar el ID de acceso global
+    if (typeof window.idAccesoGaleriaCliente !== 'undefined') { 
         currentIdAccesoGaleriaParaLog = window.idAccesoGaleriaCliente;
     }
 
@@ -196,7 +194,7 @@ function mostrarImagenLightbox(indice) {
 function abrirLightbox(galeria, indice, esGaleriaDeCliente = false) {
     if (!lightboxElement) { console.error("Lightbox element not found."); return; }
     galeriaActivaLightbox = galeria;
-     if (esGaleriaDeCliente && typeof window.idAccesoGaleriaCliente !== 'undefined') { // Asegurar que el ID de acceso esté disponible
+     if (esGaleriaDeCliente && typeof window.idAccesoGaleriaCliente !== 'undefined') { 
         currentIdAccesoGaleriaParaLog = window.idAccesoGaleriaCliente;
     }
     mostrarImagenLightbox(indice); 
@@ -218,8 +216,6 @@ function cerrarLightboxFunction() {
     }
     isLightboxImageZoomed = false;
     currentOriginalWasabiUrlForLightbox = '';
-    // No resetear currentIdAccesoGaleriaParaLog aquí globalmente,
-    // se maneja por página o al abrir una nueva galería.
 }
 
 window.inicializarLightboxGlobal = function(selectorEnlaces) {
@@ -298,20 +294,18 @@ function configurarListenersDeEdicion() {
                     saturate: currentLightboxFilters.saturate
                 });
                 
-                resetImageAdjustments(); // Llama primero para resetear todo a 'original'
-                currentLightboxFilters.activeNamedFilter = filterName; // Establece el filtro nuevo
+                resetImageAdjustments(); 
+                currentLightboxFilters.activeNamedFilter = filterName;
                 console.log(`Cliente: Filtro activo cambiado a: ${filterName}. Estado después de reset: ${JSON.stringify(currentLightboxFilters)}`);
 
-                // Aplicar valores específicos del filtro seleccionado
-                // Es crucial que aquí se establezcan TODOS los valores relevantes de currentLightboxFilters
-                // y se actualicen los sliders visualmente.
                 switch (filterName) {
                     case 'original':
-                        // resetImageAdjustments ya lo dejó en el estado correcto (saturate: 100, grayscale: 0, sepia: 0)
+                        // No se necesita nada más, resetImageAdjustments() ya lo hizo.
+                        // currentLightboxFilters.saturate es 100.
                         break;
                     case 'grayscale':
                         currentLightboxFilters.grayscale = 100;
-                        currentLightboxFilters.saturate = 0; // B&N implica 0 saturación
+                        currentLightboxFilters.saturate = 0; 
                         if (saturationSlider) saturationSlider.value = 0; 
                         if (saturationValueDisplay) saturationValueDisplay.textContent = '0%';
                         break;
@@ -331,14 +325,13 @@ function configurarListenersDeEdicion() {
                         break;
                     case 'sepia':
                         currentLightboxFilters.sepia = 100;
-                        currentLightboxFilters.saturate = 0; // Sepia completo implica base desaturada
-                        currentLightboxFilters.grayscale = 100; // Para preview CSS, aunque el server hace grayscale().tint()
+                        currentLightboxFilters.saturate = 0; 
+                        currentLightboxFilters.grayscale = 100; 
                         if (saturationSlider) saturationSlider.value = 0; 
                         if (saturationValueDisplay) saturationValueDisplay.textContent = '0%';
                         break;
-                    // --- Filtros de Color (Asegurar que 'saturate' sea > 0) ---
                     case 'vintage_suave':
-                        currentLightboxFilters.saturate = 90; // Color
+                        currentLightboxFilters.saturate = 30; // <<< ASEGURAR COLOR
                         currentLightboxFilters.sepia = 30; 
                         currentLightboxFilters.contrast = 105; 
                         currentLightboxFilters.brightness = 97;
@@ -347,7 +340,7 @@ function configurarListenersDeEdicion() {
                         if (brightnessSlider) brightnessSlider.value = 97; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '97%';
                         break;
                     case 'valencia_filter':
-                        currentLightboxFilters.saturate = 108; // Color
+                        currentLightboxFilters.saturate = 108; // <<< ASEGURAR COLOR
                         currentLightboxFilters.sepia = 8; 
                         currentLightboxFilters.contrast = 105; 
                         currentLightboxFilters.brightness = 105;
@@ -356,21 +349,21 @@ function configurarListenersDeEdicion() {
                         if (brightnessSlider) brightnessSlider.value = 105; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '105%';
                         break;
                     case 'calido':
-                        currentLightboxFilters.saturate = 110; // Color
+                        currentLightboxFilters.saturate = 110; // <<< ASEGURAR COLOR
                         currentLightboxFilters.brightness = 103;
                         currentLightboxFilters.sepia = 15; 
                         if (saturationSlider) saturationSlider.value = 110; if (saturationValueDisplay) saturationValueDisplay.textContent = '110%';
                         if (brightnessSlider) brightnessSlider.value = 103; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '103%';
                         break;
                     case 'frio':
-                        currentLightboxFilters.saturate = 105; // Color
+                        currentLightboxFilters.saturate = 105; // <<< ASEGURAR COLOR
                         currentLightboxFilters.brightness = 102;
                         currentLightboxFilters.hueRotate = 195; 
                         if (saturationSlider) saturationSlider.value = 105; if (saturationValueDisplay) saturationValueDisplay.textContent = '105%';
                         if (brightnessSlider) brightnessSlider.value = 102; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '102%';
                         break;
                     case 'kodak_gold':
-                        currentLightboxFilters.saturate = 110; // Color
+                        currentLightboxFilters.saturate = 110; // <<< ASEGURAR COLOR
                         currentLightboxFilters.brightness = 105;
                         currentLightboxFilters.contrast = 108; 
                         currentLightboxFilters.sepia = 10; 
@@ -379,8 +372,8 @@ function configurarListenersDeEdicion() {
                         if (contrastSlider) contrastSlider.value = 108; if (contrastValueDisplay) contrastValueDisplay.textContent = '108%';
                         if (brightnessSlider) brightnessSlider.value = 105; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '105%';
                         break;
-                    case 'mate_look': // Este dijiste que funciona bien
-                        currentLightboxFilters.saturate = 75; // Color (desaturado)
+                    case 'mate_look': 
+                        currentLightboxFilters.saturate = 75; // <<< COLOR (desaturado)
                         currentLightboxFilters.contrast = 88; 
                         currentLightboxFilters.brightness = 108;
                         if (saturationSlider) saturationSlider.value = 75; if (saturationValueDisplay) saturationValueDisplay.textContent = '75%';
@@ -388,31 +381,33 @@ function configurarListenersDeEdicion() {
                         if (brightnessSlider) brightnessSlider.value = 108; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '108%';
                         break;
                     case 'aden_filter':
-                        currentLightboxFilters.saturate = 85; // Color
+                        currentLightboxFilters.saturate = 85; // <<< ASEGURAR COLOR
                         currentLightboxFilters.brightness = 110;
                         currentLightboxFilters.contrast = 90; 
                         currentLightboxFilters.hueRotate = -20;
+                        currentLightboxFilters.grayscale = 0; // Asegurar que no sea grayscale
+                        currentLightboxFilters.sepia = 0;     // Asegurar que no sea sepia puro (el look aden es un tinte, no sepia)
                         if (saturationSlider) saturationSlider.value = 85; if (saturationValueDisplay) saturationValueDisplay.textContent = '85%';
-                        if (contrastSlider) contrastSlider.value = 90; if (contrastValueDisplay) contrastValueDisplay.textContent = '90%';
                         if (brightnessSlider) brightnessSlider.value = 110; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '110%';
+                        if (contrastSlider) contrastSlider.value = 90; if (contrastValueDisplay) contrastValueDisplay.textContent = '90%';
                         break;
                     case 'teal_orange': 
-                        currentLightboxFilters.saturate = 120; // Color
+                        currentLightboxFilters.saturate = 120; // <<< ASEGURAR COLOR
                         currentLightboxFilters.contrast = 110; 
                         if (saturationSlider) saturationSlider.value = 120; if (saturationValueDisplay) saturationValueDisplay.textContent = '120%';
                         if (contrastSlider) contrastSlider.value = 110; if (contrastValueDisplay) contrastValueDisplay.textContent = '110%';
                         break;
-                    case 'cinematic_look': // Este es uno de los problemáticos
-                        currentLightboxFilters.saturate = 80;  // ASEGURAR COLOR (80% saturación)
+                    case 'cinematic_look': 
+                        currentLightboxFilters.saturate = 80;  // <<< ASEGURAR COLOR
                         currentLightboxFilters.contrast = 115; 
-                        currentLightboxFilters.sepia = 5; // Ligero tinte, no monocromo
+                        currentLightboxFilters.sepia = 5; // Ligero tinte
                         currentLightboxFilters.grayscale = 0; // Asegurar que no sea grayscale
                         if (saturationSlider) saturationSlider.value = 80; if (saturationValueDisplay) saturationValueDisplay.textContent = '80%';
                         if (contrastSlider) contrastSlider.value = 115; if (contrastValueDisplay) contrastValueDisplay.textContent = '115%';
                         break;
                     default:
-                        console.warn("Filtro nombrado no manejado en switch del cliente:", filterName);
-                        // Se queda con los valores de resetImageAdjustments (Original)
+                        // 'original' ya fue manejado por resetImageAdjustments
+                        console.warn("Filtro nombrado no completamente definido en cliente:", filterName);
                         break;
                 }
                 
@@ -443,17 +438,24 @@ function configurarListenersDeEdicion() {
             const currentLink = galeriaActivaLightbox[indiceActualLightbox];
             const originalFileName = currentLink ? currentLink.getAttribute('data-original-name') : 'imagen_editada.jpg';
             
-            const editsToSend = {
-                brightness: currentLightboxFilters.brightness / 100,
-                contrast: currentLightboxFilters.contrast / 100,
-                saturate: currentLightboxFilters.saturate / 100,
-                grayscale: currentLightboxFilters.grayscale > 0, 
-                sepia: currentLightboxFilters.sepia > 0, 
-                activeNamedFilter: currentLightboxFilters.activeNamedFilter,
-                originalName: originalFileName 
-            };
+            // public/js/script.js
 
-            console.log("Cliente: Enviando para descarga:", JSON.stringify(editsToSend));
+// Dentro de la función del lightboxDownloadButton.addEventListener('click', ...)
+const editsToSend = {
+    brightness: currentLightboxFilters.brightness / 100,
+    contrast: currentLightboxFilters.contrast / 100,
+    saturate: currentLightboxFilters.saturate / 100, // Ya está bien así
+    grayscale: currentLightboxFilters.grayscale > 0, // Si es >0, se considera true
+
+    // NUEVO: Enviar los valores específicos de CSS que no son solo sliders
+    cssSepiaPercentage: currentLightboxFilters.sepia,      // Valor de 0-100
+    cssHueRotateDegrees: currentLightboxFilters.hueRotate, // Valor en grados
+    // cssBlurPx: currentLightboxFilters.blur, // Si también usaras blur en servidor
+
+    activeNamedFilter: currentLightboxFilters.activeNamedFilter,
+    originalName: originalFileName 
+};
+console.log("Cliente: Enviando para descarga:", JSON.stringify(editsToSend, null, 2));
 
             registrarInteraccionEdicion({ 
                 filtro_aplicado: 'download_edited_request',
