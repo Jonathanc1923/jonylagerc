@@ -160,7 +160,7 @@ app.post('/procesar-y-descargar-imagen', async (req, res) => {
     try {
         console.log("--- INICIO /procesar-y-descargar-imagen ---");
         console.log("Backend: Procesar y descargar. URL (base):", originalWasabiUrl.substring(0, originalWasabiUrl.indexOf('?') > -1 ? originalWasabiUrl.indexOf('?') : originalWasabiUrl.length) + "...");
-        console.log("Backend: Ediciones recibidas (edits object):", JSON.stringify(edits, null, 2));
+        console.log("Backend: Ediciones recibidas (edits object):", JSON.stringify(edits, null, 2)); // ¡ESTE LOG ES CLAVE!
 
         const imageResponse = await axios({
             url: originalWasabiUrl, method: 'GET', responseType: 'arraybuffer'
@@ -174,74 +174,76 @@ app.post('/procesar-y-descargar-imagen', async (req, res) => {
         // 1. Aplicar ajustes básicos de sliders
         if (edits.brightness !== undefined && parseFloat(edits.brightness) !== 1) {
             imageProcessor = imageProcessor.modulate({ brightness: parseFloat(edits.brightness) });
-            console.log("Aplicado brillo:", edits.brightness);
+            console.log("Aplicado brillo del slider:", edits.brightness);
         }
         if (edits.contrast !== undefined && parseFloat(edits.contrast) !== 1) {
             const contrastValue = parseFloat(edits.contrast);
             imageProcessor = imageProcessor.linear(contrastValue, (1 - contrastValue) * 128);
-            console.log("Aplicado contraste:", edits.contrast);
+            console.log("Aplicado contraste del slider:", edits.contrast);
         }
         
-        // IMPORTANTE: La saturación se aplica aquí. Si edits.saturate es 0, la imagen se volverá B&N.
-        // Los filtros nombrados que vienen después se aplicarán sobre esta imagen (posiblemente ya B&N).
-        // El cliente (script.js) es responsable de resetear la saturación a 1 (100%) cuando se selecciona un filtro de color.
         if (edits.saturate !== undefined && parseFloat(edits.saturate) !== 1) {
             imageProcessor = imageProcessor.modulate({ saturation: parseFloat(edits.saturate) });
             console.log("Aplicado saturación del slider:", edits.saturate);
             if (parseFloat(edits.saturate) === 0) {
-                console.log("INFO: Saturación del slider a 0 convirtió la imagen a B&N ANTES de filtros nombrados.");
+                console.log("INFO CRÍTICA: Saturación del slider a 0 convirtió la imagen a B&N ANTES de aplicar filtros nombrados.");
             }
         }
         
-        // 2. Aplicar Viñeta (si está activa y configurada)
+        // 2. Aplicar Viñeta
         if (edits.vignetteIntensity !== undefined && edits.vignetteIntensity > 0 && metadata.width && metadata.height) {
             const intensity = parseFloat(edits.vignetteIntensity);
-            // ... (lógica de viñeta completa como la tenías) ...
             const vignetteAmount = intensity / 100;
             const innerCircleStopPercent = Math.max(20, 100 - vignetteAmount * 70);
             const outerOpacity = Math.min(0.8, vignetteAmount * 0.8);
-            const vignetteOverlaySvg = `
-                <svg width="${metadata.width}" height="${metadata.height}">
-                    <defs>
-                        <radialGradient id="vignetteGrad" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
-                            <stop offset="${innerCircleStopPercent}%" stop-color="white" stop-opacity="0" /> 
-                            <stop offset="100%" stop-color="black" stop-opacity="${outerOpacity}" />
-                        </radialGradient>
-                    </defs>
-                    <rect x="0" y="0" width="${metadata.width}" height="${metadata.height}" fill="url(#vignetteGrad)"/>
-                </svg>`;
+            const vignetteOverlaySvg = `<svg width="${metadata.width}" height="${metadata.height}"><defs><radialGradient id="vignetteGrad" cx="50%" cy="50%" r="70%" fx="50%" fy="50%"><stop offset="${innerCircleStopPercent}%" stop-color="white" stop-opacity="0" /><stop offset="100%" stop-color="black" stop-opacity="${outerOpacity}" /></radialGradient></defs><rect x="0" y="0" width="${metadata.width}" height="${metadata.height}" fill="url(#vignetteGrad)"/></svg>`;
             try {
                 imageProcessor = imageProcessor.composite([{ input: Buffer.from(vignetteOverlaySvg), blend: 'multiply' }]);
                 console.log(`Backend: Aplicando Viñeta SVG. Intensidad: ${intensity}`);
             } catch (vignetteError) { console.error("Error al aplicar viñeta con Sharp:", vignetteError); }
         }
 
-        // 3. Aplicar filtros nombrados y efectos de color finales
+        // 3. Aplicar filtros nombrados
+        // `edits.grayscale` y `edits.sepia` son booleanos del cliente que indican si el filtro activo implica estos efectos.
+        // `edits.activeNamedFilter` es el string del filtro.
         if (edits.activeNamedFilter && edits.activeNamedFilter !== 'original') {
             console.log(`Backend: Procesando filtro nombrado: ${edits.activeNamedFilter}`);
             switch (edits.activeNamedFilter) {
                 case 'grayscale':
                 case 'bw_intenso':
                 case 'noir_look':
-                    console.log(`Aplicando filtro B&N: ${edits.activeNamedFilter}`);
-                    imageProcessor = imageProcessor.grayscale(); // Sobreescribe cualquier color anterior
-                    if (edits.activeNamedFilter === 'noir_look') {
-                        imageProcessor = imageProcessor.sharpen(0.5);
-                    }
+                    console.log(`Aplicando filtro B&N explícito: ${edits.activeNamedFilter}. Forzando grayscale.`);
+                    imageProcessor = imageProcessor.grayscale(); 
+                    if (edits.activeNamedFilter === 'noir_look') imageProcessor = imageProcessor.sharpen(0.5);
                     break;
 
-                case 'sepia':
-                case 'vintage_suave':
-                case 'valencia_filter':
-                    console.log(`Aplicando filtro Sepia: ${edits.activeNamedFilter}`);
-                    imageProcessor = imageProcessor.grayscale().tint({ r: 112, g: 66, b: 20 }); // Sobreescribe
-                    if (edits.activeNamedFilter === 'vintage_suave') {
-                        imageProcessor = imageProcessor.gamma(1.05);
-                    }
+                case 'sepia': // Solo el filtro llamado 'sepia' puro
+                    console.log(`Aplicando filtro Sepia (puro): ${edits.activeNamedFilter}. Forzando grayscale y tinte sepia.`);
+                    imageProcessor = imageProcessor.grayscale().tint({ r: 112, g: 66, b: 20 });
+                    break;
+                
+                // --- Filtros que son DE COLOR o tienen componentes de color ---
+                // Para estos, confiamos en que `edits.saturate` (del slider) ya se aplicó.
+                // Si `edits.saturate` fue 0, la imagen base ya es B&N, y estos filtros se aplicarán sobre eso.
+                // El cliente (script.js) es responsable de resetear `currentLightboxFilters.saturate` a 100
+                // cuando se selecciona un filtro de color, si esa es la intención.
+
+                case 'vintage_suave': // Cliente envía: saturate:0.9, sepia:true (por currentSepia=30)
+                    console.log(`Aplicando filtro Vintage Suave: ${edits.activeNamedFilter}`);
+                    // No forzamos grayscale aquí. El `edits.sepia=true` del cliente es para el tinte leve.
+                    // Si `edits.saturate` era 0.9, la imagen tiene color.
+                    // Aplicamos un tinte suave y gamma.
+                    imageProcessor = imageProcessor.tint({ r: 255, g: 245, b: 225 }); // Tinte sutil, no el marrón oscuro de sepia completo
+                    imageProcessor = imageProcessor.gamma(1.05);
                     break;
 
-                // Filtros de color: se aplican sobre el estado actual de la imagen 
-                // (que podría estar B&N si la saturación del slider fue 0)
+                case 'valencia_filter': // Cliente envía: saturate:1.08, sepia:true (por currentSepia=8)
+                    console.log(`Aplicando filtro Valencia: ${edits.activeNamedFilter}`);
+                    // Similar a vintage_suave, es un filtro de color con posible tinte.
+                    imageProcessor = imageProcessor.tint({ r: 255, g: 230, b: 210 }); // Ejemplo de tinte cálido
+                    // La saturación (1.08) y contraste (1.05) ya se aplicaron vía sliders.
+                    break;
+
                 case 'calido':
                     console.log("Aplicando filtro Cálido");
                     imageProcessor = imageProcessor.tint({ r: 255, g: 230, b: 190 });
@@ -257,8 +259,7 @@ app.post('/procesar-y-descargar-imagen', async (req, res) => {
                 case 'mate_look':
                     console.log("Aplicando filtro Mate Look");
                     imageProcessor = imageProcessor.gamma(1.15);
-                    // Si el look mate también implica desaturación, el cliente debería enviar edits.saturate apropiado
-                    // o podrías añadirlo aquí: imageProcessor = imageProcessor.modulate({ saturation: 0.8 });
+                    // Saturación (0.75) y contraste (0.88) ya aplicados por sliders.
                     break;
                 case 'aden_filter':
                     console.log("Aplicando filtro Aden");
@@ -268,35 +269,44 @@ app.post('/procesar-y-descargar-imagen', async (req, res) => {
                     console.log("Aplicando filtro Teal & Orange");
                     imageProcessor = imageProcessor.modulate({ hue: 15 });
                     break;
-                case 'cinematic_look':
+                case 'cinematic_look': // Cliente envía: saturate:0.8, sepia:true (por currentSepia=5)
                     console.log("Aplicando filtro Cinematic Look");
+                    // Saturación (0.8) y contraste (1.15) ya aplicados.
+                    // El ligero `sepia:5` del cliente es para el look, no para convertir a monocromo.
+                    // Aquí solo aplicamos sharpen. Si la imagen llegó B&N fue por `edits.saturate = 0`.
                     imageProcessor = imageProcessor.sharpen(0.3);
+                    if (edits.sepia) { // Si el cliente insiste en un componente sepia para este filtro
+                        // Podríamos aplicar un tinte MUY ligero, pero no el `grayscale().tint()` completo.
+                        // O ignorarlo si `sharpen` es el único efecto deseado aquí.
+                        // Por ahora, lo ignoraremos para ver si el problema es solo la desaturación previa.
+                        console.log("INFO: 'cinematic_look' también tuvo edits.sepia=true, pero el filtro se enfoca en sharpen sobre la imagen actual.");
+                    }
                     break;
                 default:
-                    console.log(`Filtro nombrado '${edits.activeNamedFilter}' no reconocido en switch. Verificando flags directos.`);
-                    // Este fallback es si el filtro no está en la lista y el cliente envió flags explícitos.
-                    // Con la lógica actual del cliente, edits.grayscale/sepia deberían ser false si activeNamedFilter no los implica.
+                    console.log(`Filtro nombrado '${edits.activeNamedFilter}' no reconocido en switch. Respetando sliders y flags directos.`);
                     if (edits.grayscale) {
                         console.log("Fallback (default del switch) a grayscale porque edits.grayscale es true.");
                         imageProcessor = imageProcessor.grayscale();
-                    } else if (edits.sepia) {
-                        console.log("Fallback (default del switch) a sepia porque edits.sepia es true.");
+                    } else if (edits.sepia) { // Solo si es un filtro no listado Y el cliente envió sepia:true
+                        console.log("Fallback (default del switch) a sepia (monocromo) porque edits.sepia es true.");
                         imageProcessor = imageProcessor.grayscale().tint({ r: 112, g: 66, b: 20 });
                     }
                     break;
             }
         } else { // 'original' o sin filtro nombrado activo
-            console.log("Procesando como 'original' o solo con sliders (sin filtro nombrado activo).");
-            // Si el filtro es 'original', solo se respetan los flags directos de grayscale/sepia si el cliente los envió como true.
-            // Con la lógica actual del cliente, si 'original' está activo, edits.grayscale y edits.sepia serán false.
+            console.log("Procesando como 'original' (sin filtro nombrado activo).");
+            // Aquí, la imagen ya fue afectada por los sliders (brillo, contraste, saturación).
+            // Si el cliente envió explícitamente grayscale:true o sepia:true con el modo 'original'
+            // (lo cual no debería pasar con el script.js actual si 'original' está seleccionado,
+            // ya que resetea grayscale y sepia a 0), los aplicamos.
             if (edits.grayscale) { 
-                console.log("Aplicando grayscale porque edits.grayscale es true (filtro 'original').");
+                console.log("Modo 'original': Aplicando grayscale porque edits.grayscale es true.");
                 imageProcessor = imageProcessor.grayscale();
             } else if (edits.sepia) { 
-                console.log("Aplicando sepia porque edits.sepia es true (filtro 'original').");
+                console.log("Modo 'original': Aplicando sepia (monocromo) porque edits.sepia es true.");
                 imageProcessor = imageProcessor.grayscale().tint({ r: 112, g: 66, b: 20 });
             } else {
-                 console.log("Modo 'original' sin grayscale/sepia explícito. Color depende de la saturación del slider.");
+                 console.log("Modo 'original' sin grayscale/sepia explícito. El color final depende de la saturación del slider y otros ajustes.");
             }
         }
 
