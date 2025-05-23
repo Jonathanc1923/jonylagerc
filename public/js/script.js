@@ -12,12 +12,12 @@ const controlNextLightbox = lightboxElement ? lightboxElement.querySelector('.li
 
 let isLightboxImageZoomed = false;
 let currentOriginalWasabiUrlForLightbox = '';
-let currentIdAccesoGaleriaParaLog = null; // Para registrar interacciones
+let currentIdAccesoGaleriaParaLog = null; 
 
 // Selectores para Herramientas de Edición
 const editorToolbar = document.getElementById('editor-toolbar');
 
-const toolBrightness = document.getElementById('tool-brightness'); // Nuevo para slider de brillo
+const toolBrightness = document.getElementById('tool-brightness');
 const brightnessSliderContainer = document.getElementById('brightness-slider-container');
 const brightnessSlider = document.getElementById('brightness-slider');
 const brightnessValueDisplay = document.getElementById('brightness-value');
@@ -34,55 +34,36 @@ const saturationValueDisplay = document.getElementById('saturation-value');
 
 const toolFilters = document.getElementById('tool-filters');
 const filtersPanelContainer = document.getElementById('filters-panel-container');
-let filterOptions = []; // Se poblará en DOMContentLoaded
+let filterOptions = []; 
 
 const toolReset = document.getElementById('tool-reset');
 const lightboxDownloadButton = document.getElementById('lightbox-download-button');
 
-// Objeto para almacenar los filtros aplicados actualmente
 let currentLightboxFilters = {
-    brightness: 100, // 100% es normal (se divide por 100 para CSS filter: brightness(1))
-    contrast: 100,   // %
-    saturate: 100, // %
-    grayscale: 0,    // %
-    sepia: 0,        // %
-    invert: 0,       // %
-    blur: 0,         // px
-    hueRotate: 0,    // deg
-    // vignetteIntensity: 0, // ELIMINADO
+    brightness: 100, contrast: 100, saturate: 100,
+    grayscale: 0, sepia: 0, invert: 0, blur: 0, hueRotate: 0,
     activeNamedFilter: 'original'
 };
 
 // --- Funciones del Lightbox y Edición ---
 
 async function registrarInteraccionEdicion(datosInteraccion) {
-    if (!currentIdAccesoGaleriaParaLog && document.getElementById('clipremium-gallery-section')) { // Solo si estamos en clipremium
-        // Intentar obtener el nombre de usuario si el ID no está (esto es un fallback)
-        const galleryTitleElement = document.getElementById('gallery-title-premium');
-        let nombreUsuarioGaleriaActual = 'desconocido_clipremium';
-        if (galleryTitleElement && galleryTitleElement.textContent.startsWith('Galería de ')) {
-            nombreUsuarioGaleriaActual = galleryTitleElement.textContent.replace('Galería de ', '').trim();
-        } else if (galleryTitleElement && galleryTitleElement.textContent !== "Tu Galería Privada" && galleryTitleElement.textContent !== "Tu Galería de Recuerdos") {
-             nombreUsuarioGaleriaActual = galleryTitleElement.textContent; // Si el título es directamente el nombre
-        }
-         // console.warn("No hay idAccesoGaleriaActual para registrar la interacción. Usando nombre: " + nombreUsuarioGaleriaActual);
-         // Aquí deberías tener una forma de obtener el id_acceso_galeria o un identificador único
-         // Por ahora, si no hay ID, no registramos para evitar datos incompletos.
-         if (!currentIdAccesoGaleriaParaLog && !nombreUsuarioGaleriaActual.includes("desconocido")) {
-            // No hacer nada si no tenemos un buen identificador
-         } else if (!currentIdAccesoGaleriaParaLog && nombreUsuarioGaleriaActual.includes("desconocido")) {
-            return;
-         }
-    } else if (!document.getElementById('clipremium-gallery-section')) { // No registrar si no es clipremium
-        return;
-    }
+    // Asegurarse de que currentIdAccesoGaleriaParaLog tenga el valor correcto para la galería actual
+    // window.idAccesoGaleriaCliente se establece en el script inline de clipremium.html después del login exitoso
+    const idAccesoActual = window.idAccesoGaleriaCliente || currentIdAccesoGaleriaParaLog;
 
+    if (!idAccesoActual && document.getElementById('clipremium-gallery-section')) {
+        console.warn("ID de Acceso no disponible para registrar la interacción en CliPremium.");
+        // Podrías decidir no registrar si falta el ID, o usar un identificador de sesión/usuario si lo tuvieras
+        return; 
+    } else if (!document.getElementById('clipremium-gallery-section')) {
+        return; // No registrar si no es la galería de clipremium
+    }
 
     const nombreImagen = currentOriginalWasabiUrlForLightbox.substring(currentOriginalWasabiUrlForLightbox.lastIndexOf('/') + 1).split('?')[0];
     
     const payload = {
-        idAcceso: currentIdAccesoGaleriaParaLog, // Puede ser null si no se obtuvo
-        nombre_usuario_galeria: currentIdAccesoGaleriaParaLog ? null : (document.getElementById('nombreUsuarioGaleria') ? document.getElementById('nombreUsuarioGaleria').value.trim() : 'anonimo_o_index'),
+        idAcceso: idAccesoActual,
         nombre_imagen_original: nombreImagen,
         ...datosInteraccion,
         timestamp_interaccion: new Date().toISOString()
@@ -96,6 +77,8 @@ async function registrarInteraccionEdicion(datosInteraccion) {
         });
         if (!response.ok) {
             console.error('Error al registrar interacción de edición en backend:', await response.text());
+        } else {
+            console.log('Interacción de edición registrada:', payload);
         }
     } catch (error) {
         console.error('Fallo de red al enviar interacción de edición:', error);
@@ -116,11 +99,10 @@ function applyCssFiltersToLightboxImage() {
     if (currentLightboxFilters.hueRotate !== 0) filterString += `hue-rotate(${currentLightboxFilters.hueRotate}deg) `;
     
     imagenLightboxElement.style.filter = filterString.trim();
-    // imagenLightboxElement.style.boxShadow = 'none'; // Viñeta CSS eliminada
 }
 
 function resetImageAdjustments() {
-    const filtroAnterior = JSON.stringify(currentLightboxFilters); // Para logueo
+    const filtroAnterior = JSON.stringify(currentLightboxFilters); 
     currentLightboxFilters = {
         brightness: 100, contrast: 100, saturate: 100,
         grayscale: 0, sepia: 0, invert: 0, blur: 0, hueRotate: 0,
@@ -136,12 +118,14 @@ function resetImageAdjustments() {
         if (originalButton) originalButton.classList.add('active-filter');
     }
     applyCssFiltersToLightboxImage();
+    console.log("Ajustes reseteados. currentLightboxFilters:", JSON.stringify(currentLightboxFilters));
     // No registrar el reset si ya estaba en original, para evitar logs innecesarios al abrir/cambiar imagen
-    if (filtroAnterior !== JSON.stringify(currentLightboxFilters)) {
-        registrarInteraccionEdicion({
+    // O si el filtro anterior era el mismo (lo cual no debería ser el caso si se resetea)
+    if (filtroAnterior !== JSON.stringify(currentLightboxFilters) && currentLightboxFilters.activeNamedFilter === 'original') {
+         registrarInteraccionEdicion({
             filtro_aplicado: 'reset_all',
-            valor_filtro_inicial: filtroAnterior,
-            valor_filtro_final: JSON.stringify(currentLightboxFilters)
+            valor_filtro_inicial: filtroAnterior, // Estado antes del reset
+            valor_filtro_final: JSON.stringify(currentLightboxFilters) // Estado después del reset (original)
         });
     }
 }
@@ -168,11 +152,16 @@ function mostrarImagenLightbox(indice) {
     const enlaceActual = galeriaActivaLightbox[indice];
     if (!enlaceActual) return;
 
-    const rutaImagenOriginalWasabi = enlaceActual.getAttribute('href');
-    currentOriginalWasabiUrlForLightbox = rutaImagenOriginalWasabi;
+    currentOriginalWasabiUrlForLightbox = enlaceActual.getAttribute('data-original-wasabi-url') || enlaceActual.getAttribute('href');
+    // currentIdAccesoGaleriaParaLog ya debería estar establecido por el script de clipremium.html
+    // o ser window.idAccesoGaleriaCliente
+    if (typeof window.idAccesoGaleriaCliente !== 'undefined') {
+        currentIdAccesoGaleriaParaLog = window.idAccesoGaleriaCliente;
+    }
+
     const titleImagen = enlaceActual.getAttribute('data-title') || 'Imagen de la galería';
 
-    imagenLightboxElement.setAttribute('src', rutaImagenOriginalWasabi);
+    imagenLightboxElement.setAttribute('src', currentOriginalWasabiUrlForLightbox); // Usar la URL original para la preview
     imagenLightboxElement.setAttribute('alt', titleImagen);
     if (tituloLightboxElement) tituloLightboxElement.textContent = titleImagen;
     
@@ -195,9 +184,9 @@ function mostrarImagenLightbox(indice) {
             hideAllEditPanels(); updateActiveToolButton(null);
         } else {
              const originalButton = editorToolbar.querySelector('.filter-option[data-filter="original"]');
-             if (originalButton && filterOptions.length > 0) {
-                filterOptions.forEach(opt => opt.classList.remove('active-filter'));
-                originalButton.classList.add('active-filter');
+             if (originalButton && filterOptions.length > 0) { 
+                 filterOptions.forEach(opt => opt.classList.remove('active-filter'));
+                 originalButton.classList.add('active-filter');
              }
         }
     }
@@ -213,12 +202,12 @@ function abrirLightbox(galeria, indice, esGaleriaDeCliente = false) {
         } else {
              const originalButton = editorToolbar.querySelector('.filter-option[data-filter="original"]');
              if (originalButton && filterOptions.length > 0) { 
-                filterOptions.forEach(opt => opt.classList.remove('active-filter'));
-                originalButton.classList.add('active-filter');
+                 filterOptions.forEach(opt => opt.classList.remove('active-filter'));
+                 originalButton.classList.add('active-filter');
              }
         }
     }
-    mostrarImagenLightbox(indice);
+    mostrarImagenLightbox(indice); // Esto ya llama a resetImageAdjustments y configura el toolbar
     lightboxElement.classList.add('activo');
     document.body.style.overflow = 'hidden';
 }
@@ -237,7 +226,8 @@ function cerrarLightboxFunction() {
     }
     isLightboxImageZoomed = false;
     currentOriginalWasabiUrlForLightbox = '';
-    currentIdAccesoGaleriaParaLog = null;
+    // No resetear currentIdAccesoGaleriaParaLog aquí, se mantiene por si se abre otra foto de la misma galería.
+    // Se resetea/establece en el script de clipremium.html o cuando se carga una nueva galería.
 }
 
 window.inicializarLightboxGlobal = function(selectorEnlaces) {
@@ -245,17 +235,23 @@ window.inicializarLightboxGlobal = function(selectorEnlaces) {
     if (nuevosEnlacesGaleria.length === 0) return;
 
     nuevosEnlacesGaleria.forEach((enlace, indice) => {
-        const nuevoEnlace = enlace.cloneNode(true);
+        const nuevoEnlace = enlace.cloneNode(true); // Clonar para remover listeners antiguos si se llama múltiples veces
         if(enlace.parentNode) enlace.parentNode.replaceChild(nuevoEnlace, enlace);
+        
         nuevoEnlace.addEventListener('click', function(evento) {
             evento.preventDefault();
             const esGaleriaDeCliente = this.getAttribute('data-lightbox') === 'clipremium-gallery';
+            // Asegurarse que currentIdAccesoGaleriaParaLog (o window.idAccesoGaleriaCliente) tiene valor si es de cliente
+            if (esGaleriaDeCliente && typeof window.idAccesoGaleriaCliente !== 'undefined') {
+                currentIdAccesoGaleriaParaLog = window.idAccesoGaleriaCliente;
+            } else if (esGaleriaDeCliente) {
+                console.warn("Abriendo lightbox de cliente sin ID de acceso globalmente disponible.");
+            }
             abrirLightbox(nuevosEnlacesGaleria, indice, esGaleriaDeCliente);
         });
     });
 };
 
-// --- EVENT LISTENERS GLOBALES PARA LIGHTBOX (Zoom, Cierre, Navegación) ---
 if (lightboxElement) {
     if (imagenLightboxElement) {
         imagenLightboxElement.addEventListener('click', function(e) { e.stopPropagation(); if (editorToolbar && window.getComputedStyle(editorToolbar).display !== 'none') { if (!isLightboxImageZoomed) { this.classList.add('zoomed-in'); this.style.cursor = 'zoom-out'; } else { this.classList.remove('zoomed-in'); this.style.cursor = 'zoom-in'; } isLightboxImageZoomed = !isLightboxImageZoomed; } });
@@ -270,13 +266,10 @@ if (lightboxElement) {
     }
 }
 
-// --- EVENT LISTENERS PARA HERRAMIENTAS DE EDICIÓN (Se configuran en DOMContentLoaded) ---
 function configurarListenersDeEdicion() {
     if (!editorToolbar) return;
-
     filterOptions = Array.from(editorToolbar.querySelectorAll('.filter-option'));
 
-    // Brightness Slider
     if (toolBrightness && brightnessSliderContainer && brightnessSlider && brightnessValueDisplay) {
         let valorInicialBrillo = currentLightboxFilters.brightness;
         toolBrightness.addEventListener('click', (e) => { e.stopPropagation(); const isActive = brightnessSliderContainer.style.display === 'flex'; hideAllEditPanels(); updateActiveToolButton(isActive ? null : toolBrightness); brightnessSliderContainer.style.display = isActive ? 'none' : 'flex'; });
@@ -285,7 +278,6 @@ function configurarListenersDeEdicion() {
         brightnessSlider.addEventListener('change', e => { registrarInteraccionEdicion({ filtro_aplicado: 'brightness', valor_filtro_inicial: valorInicialBrillo.toString(), valor_filtro_final: e.target.value }); });
         if(brightnessSliderContainer) brightnessSliderContainer.addEventListener('click', e => e.stopPropagation());
     }
-    // Contrast
     if (toolContrast && contrastSliderContainer && contrastSlider && contrastValueDisplay) {
         let valorInicialContraste = currentLightboxFilters.contrast;
         toolContrast.addEventListener('click', (e) => { e.stopPropagation(); const isActive = contrastSliderContainer.style.display === 'flex'; hideAllEditPanels(); updateActiveToolButton(isActive ? null : toolContrast); contrastSliderContainer.style.display = isActive ? 'none' : 'flex'; });
@@ -294,7 +286,6 @@ function configurarListenersDeEdicion() {
         contrastSlider.addEventListener('change', e => { registrarInteraccionEdicion({ filtro_aplicado: 'contrast', valor_filtro_inicial: valorInicialContraste.toString(), valor_filtro_final: e.target.value }); });
         if(contrastSliderContainer) contrastSliderContainer.addEventListener('click', e => e.stopPropagation());
     }
-    // Saturation
     if (toolSaturation && saturationSliderContainer && saturationSlider && saturationValueDisplay) {
         let valorInicialSaturacion = currentLightboxFilters.saturate;
         toolSaturation.addEventListener('click', (e) => { e.stopPropagation(); const isActive = saturationSliderContainer.style.display === 'flex'; hideAllEditPanels(); updateActiveToolButton(isActive ? null : toolSaturation); saturationSliderContainer.style.display = isActive ? 'none' : 'flex'; });
@@ -304,102 +295,155 @@ function configurarListenersDeEdicion() {
         if(saturationSliderContainer) saturationSliderContainer.addEventListener('click', e => e.stopPropagation());
     }
     
-    // Filters Button (para el panel de filtros)
     if (toolFilters && filtersPanelContainer) {
         toolFilters.addEventListener('click', (e) => { e.stopPropagation(); const isActive = filtersPanelContainer.style.display === 'flex'; hideAllEditPanels(); updateActiveToolButton(isActive ? null : toolFilters); filtersPanelContainer.style.display = isActive ? 'none' : 'flex'; });
         if(filtersPanelContainer) filtersPanelContainer.addEventListener('click', e => e.stopPropagation());
     }
 
-    // Filter Options Buttons
+    // *** INICIO DE CORRECCIÓN IMPORTANTE PARA MANEJO DE ESTADO DE FILTROS ***
     if (filterOptions.length > 0) {
         filterOptions.forEach(button => {
             button.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const filterName = this.dataset.filter;
-                const filtroAnterior = currentLightboxFilters.activeNamedFilter; 
-                const filtrosBaseAnteriores = { // Guardar estado de sliders antes de resetear para filtros nombrados
+                const filtroAnterior = currentLightboxFilters.activeNamedFilter;
+                const valorInicialSliders = JSON.stringify({
                     brightness: currentLightboxFilters.brightness,
                     contrast: currentLightboxFilters.contrast,
                     saturate: currentLightboxFilters.saturate
-                };
-                
-                resetImageAdjustments(); // Resetea todo a original, incluyendo activeNamedFilter y sliders
-                currentLightboxFilters.activeNamedFilter = filterName; // Establecer el nuevo filtro
+                });
 
+                // 1. Resetea TODOS los ajustes a 'original' y los sliders a 100%
+                resetImageAdjustments(); 
+                // resetImageAdjustments ya pone activeNamedFilter a 'original' y sliders a 100.
+                
+                // 2. Establece el nuevo filtro activo
+                currentLightboxFilters.activeNamedFilter = filterName;
+                console.log(`Cliente: Filtro activo cambiado a: ${filterName}`);
+
+                // 3. Aplica los valores ESPECÍFICOS del filtro seleccionado,
+                //    asegurando que 'saturate', 'grayscale', y 'sepia' estén correctos.
                 switch (filterName) {
-                    case 'grayscale': currentLightboxFilters.grayscale = 100; break;
+                    case 'original':
+                        // Ya reseteado, no se necesita nada más. Saturate es 100.
+                        break;
+                    case 'grayscale':
+                        currentLightboxFilters.grayscale = 100;
+                        currentLightboxFilters.saturate = 0; // B&N implica 0 saturación
+                        if (saturationSlider) saturationSlider.value = 0; 
+                        if (saturationValueDisplay) saturationValueDisplay.textContent = '0%';
+                        break;
                     case 'bw_intenso':
-                        currentLightboxFilters.grayscale = 100; currentLightboxFilters.contrast = 160; 
+                        currentLightboxFilters.grayscale = 100;
+                        currentLightboxFilters.saturate = 0; // B&N implica 0 saturación
+                        currentLightboxFilters.contrast = 160; 
                         if (contrastSlider) contrastSlider.value = 160; if (contrastValueDisplay) contrastValueDisplay.textContent = '160%';
+                        if (saturationSlider) saturationSlider.value = 0; if (saturationValueDisplay) saturationValueDisplay.textContent = '0%';
                         break;
-                    case 'sepia': currentLightboxFilters.sepia = 100; break;
-                    case 'calido':
-                        currentLightboxFilters.sepia = 15; currentLightboxFilters.saturate = 110; currentLightboxFilters.brightness = 103;
-                        if (saturationSlider) saturationSlider.value = 110; if (saturationValueDisplay) saturationValueDisplay.textContent = '110%';
-                        if (brightnessSlider) brightnessSlider.value = 103; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '103%';
+                    case 'noir_look': 
+                        currentLightboxFilters.grayscale = 100;
+                        currentLightboxFilters.saturate = 0; // B&N implica 0 saturación
+                        currentLightboxFilters.contrast = 165; 
+                        if (contrastSlider) contrastSlider.value = 165; if (contrastValueDisplay) contrastValueDisplay.textContent = '165%';
+                        if (saturationSlider) saturationSlider.value = 0; if (saturationValueDisplay) saturationValueDisplay.textContent = '0%';
                         break;
-                    case 'frio':
-                        currentLightboxFilters.hueRotate = 195; currentLightboxFilters.saturate = 105; currentLightboxFilters.brightness = 102;
-                        if (saturationSlider) saturationSlider.value = 105; if (saturationValueDisplay) saturationValueDisplay.textContent = '105%';
-                        if (brightnessSlider) brightnessSlider.value = 102; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '102%';
+                    case 'sepia':
+                        currentLightboxFilters.sepia = 100;
+                        currentLightboxFilters.saturate = 0; // Sepia implica desaturación base
+                        if (saturationSlider) saturationSlider.value = 0; 
+                        if (saturationValueDisplay) saturationValueDisplay.textContent = '0%';
                         break;
                     case 'vintage_suave':
-                        currentLightboxFilters.sepia = 30; currentLightboxFilters.contrast = 105; currentLightboxFilters.saturate = 90; currentLightboxFilters.brightness = 97;
+                        currentLightboxFilters.sepia = 30; 
+                        currentLightboxFilters.contrast = 105; 
+                        currentLightboxFilters.saturate = 90; // Color presente
+                        currentLightboxFilters.brightness = 97;
                         if (contrastSlider) contrastSlider.value = 105; if (contrastValueDisplay) contrastValueDisplay.textContent = '105%';
                         if (saturationSlider) saturationSlider.value = 90; if (saturationValueDisplay) saturationValueDisplay.textContent = '90%';
                         if (brightnessSlider) brightnessSlider.value = 97; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '97%';
                         break;
-                    case 'kodak_gold':
-                        currentLightboxFilters.sepia = 10; currentLightboxFilters.hueRotate = -8; currentLightboxFilters.contrast = 108; currentLightboxFilters.saturate = 110; currentLightboxFilters.brightness = 105;
-                        if (contrastSlider) contrastSlider.value = 108; if (contrastValueDisplay) contrastValueDisplay.textContent = '108%';
-                        if (saturationSlider) saturationSlider.value = 110; if (saturationValueDisplay) saturationValueDisplay.textContent = '110%';
-                        if (brightnessSlider) brightnessSlider.value = 105; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '105%';
-                        break;
-                    case 'mate_look':
-                        currentLightboxFilters.contrast = 88; if (contrastSlider) contrastSlider.value = 88; if (contrastValueDisplay) contrastValueDisplay.textContent = '88%';
-                        currentLightboxFilters.saturate = 75; if (saturationSlider) saturationSlider.value = 75; if (saturationValueDisplay) saturationValueDisplay.textContent = '75%';
-                        currentLightboxFilters.brightness = 108; if (brightnessSlider) brightnessSlider.value = 108; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '108%';
-                        break;
-                    case 'aden_filter':
-                        currentLightboxFilters.hueRotate = -20; currentLightboxFilters.contrast = 90; currentLightboxFilters.saturate = 85; currentLightboxFilters.brightness = 110;
-                        if (contrastSlider) contrastSlider.value = 90; if (contrastValueDisplay) contrastValueDisplay.textContent = '90%';
-                        if (saturationSlider) saturationSlider.value = 85; if (saturationValueDisplay) saturationValueDisplay.textContent = '85%';
-                        if (brightnessSlider) brightnessSlider.value = 110; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '110%';
-                        break;
-                    case 'valencia_filter':
-                        currentLightboxFilters.sepia = 8; currentLightboxFilters.contrast = 105; currentLightboxFilters.saturate = 108; currentLightboxFilters.brightness = 105;
+                    case 'valencia_filter': // Este es un filtro tipo sepia/cálido
+                        currentLightboxFilters.sepia = 8; 
+                        currentLightboxFilters.contrast = 105; 
+                        currentLightboxFilters.saturate = 108; // Color presente
+                        currentLightboxFilters.brightness = 105;
                         if (contrastSlider) contrastSlider.value = 105; if (contrastValueDisplay) contrastValueDisplay.textContent = '105%';
                         if (saturationSlider) saturationSlider.value = 108; if (saturationValueDisplay) saturationValueDisplay.textContent = '108%';
                         if (brightnessSlider) brightnessSlider.value = 105; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '105%';
                         break;
+                    case 'calido':
+                        currentLightboxFilters.saturate = 110; // Color presente
+                        currentLightboxFilters.brightness = 103;
+                        currentLightboxFilters.sepia = 15; // Ligero tinte cálido (sepia bajo)
+                        if (saturationSlider) saturationSlider.value = 110; if (saturationValueDisplay) saturationValueDisplay.textContent = '110%';
+                        if (brightnessSlider) brightnessSlider.value = 103; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '103%';
+                        break;
+                    case 'frio':
+                        currentLightboxFilters.saturate = 105; // Color presente
+                        currentLightboxFilters.brightness = 102;
+                        currentLightboxFilters.hueRotate = 195; // Tinte frío
+                        if (saturationSlider) saturationSlider.value = 105; if (saturationValueDisplay) saturationValueDisplay.textContent = '105%';
+                        if (brightnessSlider) brightnessSlider.value = 102; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '102%';
+                        break;
+                    case 'kodak_gold':
+                        currentLightboxFilters.saturate = 110; // Color presente
+                        currentLightboxFilters.brightness = 105;
+                        currentLightboxFilters.contrast = 108; 
+                        currentLightboxFilters.sepia = 10; 
+                        currentLightboxFilters.hueRotate = -8;
+                        if (contrastSlider) contrastSlider.value = 108; if (contrastValueDisplay) contrastValueDisplay.textContent = '108%';
+                        if (saturationSlider) saturationSlider.value = 110; if (saturationValueDisplay) saturationValueDisplay.textContent = '110%';
+                        if (brightnessSlider) brightnessSlider.value = 105; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '105%';
+                        break;
+                    case 'mate_look': // Funciona bien
+                        currentLightboxFilters.saturate = 75; // Color presente (desaturado)
+                        currentLightboxFilters.contrast = 88; 
+                        currentLightboxFilters.brightness = 108;
+                        if (contrastSlider) contrastSlider.value = 88; if (contrastValueDisplay) contrastValueDisplay.textContent = '88%';
+                        if (saturationSlider) saturationSlider.value = 75; if (saturationValueDisplay) saturationValueDisplay.textContent = '75%';
+                        if (brightnessSlider) brightnessSlider.value = 108; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '108%';
+                        break;
+                    case 'aden_filter':
+                        currentLightboxFilters.saturate = 85; // Color presente
+                        currentLightboxFilters.brightness = 110;
+                        currentLightboxFilters.contrast = 90; 
+                        currentLightboxFilters.hueRotate = -20;
+                        if (contrastSlider) contrastSlider.value = 90; if (contrastValueDisplay) contrastValueDisplay.textContent = '90%';
+                        if (saturationSlider) saturationSlider.value = 85; if (saturationValueDisplay) saturationValueDisplay.textContent = '85%';
+                        if (brightnessSlider) brightnessSlider.value = 110; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '110%';
+                        break;
                     case 'teal_orange': 
-                        currentLightboxFilters.contrast = 110; if (contrastSlider) contrastSlider.value = 110; if (contrastValueDisplay) contrastValueDisplay.textContent = '110%';
-                        currentLightboxFilters.saturate = 120; if (saturationSlider) saturationSlider.value = 120; if (saturationValueDisplay) saturationValueDisplay.textContent = '120%';
-                        // Aproximación CSS para Teal & Orange con hue-rotate:
-                        // currentLightboxFilters.hueRotate = -30; // Virar rojos/amarillos hacia naranjas y azules hacia cianes
+                        currentLightboxFilters.saturate = 120; // Color presente
+                        currentLightboxFilters.contrast = 110; 
+                        // hueRotate para teal & orange es más complejo que un simple valor,
+                        // el backend lo maneja mejor con `modulate({hue: 15})` si el cliente solo envía el nombre.
+                        // Aquí solo nos aseguramos que la saturación sea de color.
+                        if (contrastSlider) contrastSlider.value = 110; if (contrastValueDisplay) contrastValueDisplay.textContent = '110%';
+                        if (saturationSlider) saturationSlider.value = 120; if (saturationValueDisplay) saturationValueDisplay.textContent = '120%';
                         break;
-                    case 'noir_look': 
-                        currentLightboxFilters.grayscale = 100; currentLightboxFilters.contrast = 165; 
-                        if (contrastSlider) contrastSlider.value = 165; if (contrastValueDisplay) contrastValueDisplay.textContent = '165%';
-                        break;
-                    case 'cinematic_look': 
-                        currentLightboxFilters.contrast = 115; if (contrastSlider) contrastSlider.value = 115; if (contrastValueDisplay) contrastValueDisplay.textContent = '115%';
-                        currentLightboxFilters.saturate = 80;  if (saturationSlider) saturationSlider.value = 80; if (saturationValueDisplay) saturationValueDisplay.textContent = '80%';
-                        currentLightboxFilters.sepia = 5; 
+                    case 'cinematic_look': // Problemático antes
+                        currentLightboxFilters.saturate = 80; // ASEGURAR COLOR (80% saturación)
+                        currentLightboxFilters.contrast = 115; 
+                        currentLightboxFilters.sepia = 5; // Ligero tinte sepia, pero la imagen base es color
+                        if (contrastSlider) contrastSlider.value = 115; if (contrastValueDisplay) contrastValueDisplay.textContent = '115%';
+                        if (saturationSlider) saturationSlider.value = 80; if (saturationValueDisplay) saturationValueDisplay.textContent = '80%';
                         break;
                 }
-                applyCssFiltersToLightboxImage();
+                
+                console.log("Cliente: Filtros aplicados para", filterName, JSON.stringify(currentLightboxFilters));
+                applyCssFiltersToLightboxImage(); // Aplica para previsualización CSS
                 filterOptions.forEach(opt => opt.classList.remove('active-filter'));
                 this.classList.add('active-filter');
 
                 registrarInteraccionEdicion({
                     filtro_aplicado: 'named_filter_selection',
-                    valor_filtro_inicial: filtroAnterior, // o JSON.stringify(filtrosBaseAnteriores) si quieres más detalle
-                    valor_filtro_final: filterName
+                    valor_filtro_inicial: filtroAnterior + " " + valorInicialSliders,
+                    valor_filtro_final: filterName + " " + JSON.stringify(currentLightboxFilters)
                 });
             });
         });
     }
+    // *** FIN DE CORRECCIÓN IMPORTANTE ***
 
     if (toolReset) { toolReset.addEventListener('click', (e) => { e.stopPropagation(); resetImageAdjustments(); hideAllEditPanels(); updateActiveToolButton(null); }); }
 
@@ -412,28 +456,30 @@ function configurarListenersDeEdicion() {
             if (spanElement) spanElement.textContent = 'Procesando...'; buttonElement.disabled = true;
 
             let originalFileNameFromTitle = "imagen.jpg";
-            if (galeriaActivaLightbox[indiceActualLightbox]) {
-                const dataTitle = galeriaActivaLightbox[indiceActualLightbox].getAttribute('data-title');
-                const match = dataTitle ? dataTitle.match(/-\s*([^?#]+\.(jpg|jpeg|png|gif))/i) : null;
-                if (match && match[1]) originalFileNameFromTitle = match[1];
-                else if (dataTitle) originalFileNameFromTitle = `${dataTitle.replace(/[^a-z0-9_.-]/gi, '_').substring(0, 50)}.jpg`;
+            // Obtener el nombre original del atributo data-original-name si existe (establecido en displayImages en clipremium.html)
+            const currentLink = galeriaActivaLightbox[indiceActualLightbox];
+            if (currentLink) {
+                 originalFileNameFromTitle = currentLink.getAttribute('data-original-name') || originalFileNameFromTitle;
             }
+            
             const editsToSend = {
                 brightness: currentLightboxFilters.brightness / 100,
                 contrast: currentLightboxFilters.contrast / 100,
-                saturate: currentLightboxFilters.saturate / 100,
-                grayscale: currentLightboxFilters.grayscale > 0,
-                sepia: currentLightboxFilters.sepia > 0,
-                invert: currentLightboxFilters.invert > 0,
-                blur: currentLightboxFilters.blur,
-                hueRotate: currentLightboxFilters.hueRotate,
-                // vignetteIntensity: 0, // Eliminado
+                saturate: currentLightboxFilters.saturate / 100, // Este valor es crucial
+                grayscale: currentLightboxFilters.grayscale > 0, // True si grayscale es 100%
+                sepia: currentLightboxFilters.sepia > 0,         // True si sepia es > 0%
+                // Ya no enviamos invert, blur, hueRotate directamente al backend
+                // porque los filtros nombrados los manejan, y los sliders son los principales.
+                // Si quisieras sliders para estos, necesitarías añadirlos al objeto editsToSend.
                 activeNamedFilter: currentLightboxFilters.activeNamedFilter,
-                originalName: originalFileNameFromTitle
+                originalName: originalFileNameFromTitle 
             };
-            registrarInteraccionEdicion({ // Registrar antes de la descarga
-                filtro_aplicado: 'download_edited',
-                valor_filtro_inicial: 'N/A',
+
+            console.log("Cliente: Enviando para descarga:", JSON.stringify(editsToSend));
+
+            registrarInteraccionEdicion({ 
+                filtro_aplicado: 'download_edited_request',
+                valor_filtro_inicial: 'N/A', 
                 valor_filtro_final: JSON.stringify(editsToSend),
                 es_descarga_editada: true
             });
@@ -445,7 +491,7 @@ function configurarListenersDeEdicion() {
                 if (!response.ok) {
                     let errorData = { message: `Error del servidor: ${response.status}` };
                     try { errorData = await response.json(); } catch (parseErr) { /* No es JSON */ }
-                    throw new Error(errorData.message);
+                    throw new Error(errorData.message || `Error HTTP ${response.status}`);
                 }
                 const disposition = response.headers.get('content-disposition');
                 let downloadFileName = "imagen_editada_JonyLager.jpg";
@@ -478,13 +524,12 @@ function configurarListenersDeEdicion() {
             }
         }
     });
-} // Fin de configurarListenersDeEdicion()
+} 
 
-// --- Funcionalidad General del Sitio (DOM Listo) ---
 document.addEventListener('DOMContentLoaded', function() {
-    if (editorToolbar) { // Poblar filterOptions y configurar listeners de edición solo si la barra existe
+    if (editorToolbar) { 
         filterOptions = Array.from(editorToolbar.querySelectorAll('.filter-option'));
-        configurarListenersDeEdicion(); // Llamar aquí para asegurar que todos los elementos de edición existen
+        configurarListenersDeEdicion(); 
     }
 
     const currentYearSpanGlobal = document.getElementById('currentYear'); 
