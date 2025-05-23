@@ -2,7 +2,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const bcrypt = require('bcrypt'); // Asegúrate que esté importado
+const bcrypt = require('bcrypt'); 
 const { Pool } = require('pg');
 const { S3Client, ListObjectsV2Command, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
@@ -54,13 +54,11 @@ const DATABASE_CONNECTION_STRING = process.env.DATABASE_URL;
 
 if (!DATABASE_CONNECTION_STRING) {
     console.error("¡ERROR CRÍTICO! La variable de entorno DATABASE_URL no está configurada.");
-    // En un entorno de producción, podrías querer que la aplicación falle si no puede conectarse a la BD.
-    // process.exit(1);
 }
 
 const pool = new Pool({
     connectionString: DATABASE_CONNECTION_STRING,
-    ssl: { rejectUnauthorized: false } // Revisa la recomendación de Render para SSL en producción
+    ssl: { rejectUnauthorized: false } 
 });
 pool.connect()
     .then(() => console.log('¡Conectado a PostgreSQL en Render!'))
@@ -102,9 +100,7 @@ app.post('/acceder-galeria-privada', async (req, res) => {
             return res.status(429).json({ success: false, message: `Demasiados intentos. Acceso bloqueado. Intenta de nuevo en ${timeLeftMinutes} minutos.` });
         }
         
-        // Usando comparación de texto plano (TEMPORAL - ¡CAMBIAR A BCRYPT!)
         const esCodigoValido = (codigo_acceso_galeria === galeriaInfo.codigo_acceso_galeria); 
-        // Para usar bcrypt (RECOMENDADO):
         // const esCodigoValido = await bcrypt.compare(codigo_acceso_galeria, galeriaInfo.codigo_acceso_galeria);
         console.log(`VALIDACIÓN LOGIN para '${nombre_usuario_galeria}': Ingresado='${codigo_acceso_galeria}', EnBD='${galeriaInfo.codigo_acceso_galeria}', Válido=${esCodigoValido}`);
 
@@ -119,11 +115,9 @@ app.post('/acceder-galeria-privada', async (req, res) => {
             return res.status(401).json({ success: false, message: 'Código de acceso incorrecto.' });
         }
 
-        // Código válido
         const nuevosIngresosCorrectos = galeriaInfo.ingresos_correctos + 1;
         await pool.query('UPDATE accesos_galerias SET intentos_fallidos = 0, bloqueado_hasta = NULL, ingresos_correctos = $1 WHERE id = $2', [nuevosIngresosCorrectos, galeriaInfo.id]);
         console.log(`Login exitoso para ${nombre_usuario_galeria}. Ingreso Nro: ${nuevosIngresosCorrectos}. ID Acceso: ${galeriaInfo.id}`);
-
 
         if (!s3Client || !BUCKET_NAME) {
             console.error("Error crítico: S3 Client o BUCKET_NAME no están configurados al intentar obtener imágenes.");
@@ -144,13 +138,11 @@ app.post('/acceder-galeria-privada', async (req, res) => {
                 const fileName = key.substring(key.lastIndexOf('/') + 1);
                 const getViewCommand = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key });
                 const viewUrl = await getSignedUrl(s3Client, getViewCommand, { expiresIn: 3600 });
-                // Para la descarga directa desde la galería (no la editada), se usa una URL firmada que sugiere el nombre
                 const getDownloadDirectCommand = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key, ResponseContentDisposition: `attachment; filename="${fileName}"`});
                 const downloadUrl = await getSignedUrl(s3Client, getDownloadDirectCommand, { expiresIn: 3600 });
                 return { viewUrl, downloadUrl, originalName: fileName };
             });
         const imagenesConUrls = await Promise.all(promesasDeUrls);
-        // Devolver también el id de acceso para que el frontend lo pueda usar al registrar interacciones
         res.json({ success: true, imagenes: imagenesConUrls, tituloGaleria: galeriaInfo.descripcion_galeria, idAcceso: galeriaInfo.id });
     } catch (error) {
         console.error("Error en /acceder-galeria-privada:", error);
@@ -189,17 +181,22 @@ app.post('/procesar-y-descargar-imagen', async (req, res) => {
             imageProcessor = imageProcessor.linear(contrastValue, (1 - contrastValue) * 128);
             console.log("Aplicado contraste:", edits.contrast);
         }
+        
+        // IMPORTANTE: La saturación se aplica aquí. Si edits.saturate es 0, la imagen se volverá B&N.
+        // Los filtros nombrados que vienen después se aplicarán sobre esta imagen (posiblemente ya B&N).
+        // El cliente (script.js) es responsable de resetear la saturación a 1 (100%) cuando se selecciona un filtro de color.
         if (edits.saturate !== undefined && parseFloat(edits.saturate) !== 1) {
             imageProcessor = imageProcessor.modulate({ saturation: parseFloat(edits.saturate) });
-            console.log("Aplicado saturación:", edits.saturate);
+            console.log("Aplicado saturación del slider:", edits.saturate);
             if (parseFloat(edits.saturate) === 0) {
-                console.log("INFO: Saturación a 0 convertirá la imagen a B&N.");
+                console.log("INFO: Saturación del slider a 0 convirtió la imagen a B&N ANTES de filtros nombrados.");
             }
         }
         
         // 2. Aplicar Viñeta (si está activa y configurada)
         if (edits.vignetteIntensity !== undefined && edits.vignetteIntensity > 0 && metadata.width && metadata.height) {
             const intensity = parseFloat(edits.vignetteIntensity);
+            // ... (lógica de viñeta completa como la tenías) ...
             const vignetteAmount = intensity / 100;
             const innerCircleStopPercent = Math.max(20, 100 - vignetteAmount * 70);
             const outerOpacity = Math.min(0.8, vignetteAmount * 0.8);
@@ -227,7 +224,7 @@ app.post('/procesar-y-descargar-imagen', async (req, res) => {
                 case 'bw_intenso':
                 case 'noir_look':
                     console.log(`Aplicando filtro B&N: ${edits.activeNamedFilter}`);
-                    imageProcessor = imageProcessor.grayscale();
+                    imageProcessor = imageProcessor.grayscale(); // Sobreescribe cualquier color anterior
                     if (edits.activeNamedFilter === 'noir_look') {
                         imageProcessor = imageProcessor.sharpen(0.5);
                     }
@@ -237,12 +234,14 @@ app.post('/procesar-y-descargar-imagen', async (req, res) => {
                 case 'vintage_suave':
                 case 'valencia_filter':
                     console.log(`Aplicando filtro Sepia: ${edits.activeNamedFilter}`);
-                    imageProcessor = imageProcessor.grayscale().tint({ r: 112, g: 66, b: 20 });
+                    imageProcessor = imageProcessor.grayscale().tint({ r: 112, g: 66, b: 20 }); // Sobreescribe
                     if (edits.activeNamedFilter === 'vintage_suave') {
                         imageProcessor = imageProcessor.gamma(1.05);
                     }
                     break;
 
+                // Filtros de color: se aplican sobre el estado actual de la imagen 
+                // (que podría estar B&N si la saturación del slider fue 0)
                 case 'calido':
                     console.log("Aplicando filtro Cálido");
                     imageProcessor = imageProcessor.tint({ r: 255, g: 230, b: 190 });
@@ -258,6 +257,8 @@ app.post('/procesar-y-descargar-imagen', async (req, res) => {
                 case 'mate_look':
                     console.log("Aplicando filtro Mate Look");
                     imageProcessor = imageProcessor.gamma(1.15);
+                    // Si el look mate también implica desaturación, el cliente debería enviar edits.saturate apropiado
+                    // o podrías añadirlo aquí: imageProcessor = imageProcessor.modulate({ saturation: 0.8 });
                     break;
                 case 'aden_filter':
                     console.log("Aplicando filtro Aden");
@@ -273,10 +274,12 @@ app.post('/procesar-y-descargar-imagen', async (req, res) => {
                     break;
                 default:
                     console.log(`Filtro nombrado '${edits.activeNamedFilter}' no reconocido en switch. Verificando flags directos.`);
-                    if (edits.grayscale) { // `edits.grayscale` es un booleano del cliente
+                    // Este fallback es si el filtro no está en la lista y el cliente envió flags explícitos.
+                    // Con la lógica actual del cliente, edits.grayscale/sepia deberían ser false si activeNamedFilter no los implica.
+                    if (edits.grayscale) {
                         console.log("Fallback (default del switch) a grayscale porque edits.grayscale es true.");
                         imageProcessor = imageProcessor.grayscale();
-                    } else if (edits.sepia) { // `edits.sepia` es un booleano del cliente
+                    } else if (edits.sepia) {
                         console.log("Fallback (default del switch) a sepia porque edits.sepia es true.");
                         imageProcessor = imageProcessor.grayscale().tint({ r: 112, g: 66, b: 20 });
                     }
@@ -284,14 +287,16 @@ app.post('/procesar-y-descargar-imagen', async (req, res) => {
             }
         } else { // 'original' o sin filtro nombrado activo
             console.log("Procesando como 'original' o solo con sliders (sin filtro nombrado activo).");
+            // Si el filtro es 'original', solo se respetan los flags directos de grayscale/sepia si el cliente los envió como true.
+            // Con la lógica actual del cliente, si 'original' está activo, edits.grayscale y edits.sepia serán false.
             if (edits.grayscale) { 
-                console.log("Aplicando grayscale porque edits.grayscale es true (filtro 'original' o sin filtro).");
+                console.log("Aplicando grayscale porque edits.grayscale es true (filtro 'original').");
                 imageProcessor = imageProcessor.grayscale();
             } else if (edits.sepia) { 
-                console.log("Aplicando sepia porque edits.sepia es true (filtro 'original' o sin filtro).");
+                console.log("Aplicando sepia porque edits.sepia es true (filtro 'original').");
                 imageProcessor = imageProcessor.grayscale().tint({ r: 112, g: 66, b: 20 });
             } else {
-                 console.log("Modo 'original' sin grayscale/sepia explícito. La imagen debería ser a color (modificada solo por sliders y saturación).");
+                 console.log("Modo 'original' sin grayscale/sepia explícito. Color depende de la saturación del slider.");
             }
         }
 
@@ -344,8 +349,8 @@ app.post('/registrar-interaccion-edicion', async (req, res) => {
             idAcceso,
             nombre_imagen_original,
             filtro_aplicado, 
-            JSON.stringify(valor_filtro_inicial), // Asumiendo que quieres guardarlos como JSON strings
-            JSON.stringify(valor_filtro_final),   // Asumiendo que quieres guardarlos como JSON strings
+            JSON.stringify(valor_filtro_inicial), 
+            JSON.stringify(valor_filtro_final),   
             es_descarga_editada
         ]);
         console.log("Interacción de edición registrada con ID:", result.rows[0].id);
