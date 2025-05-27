@@ -284,6 +284,95 @@ window.inicializarLightboxGlobal = function(selectorEnlaces) {
 
 
 if (lightboxElement) {
+    window.inicializarLightboxGlobal = function(selectorEnlaces) {
+    // ... (tu lógica actual de inicializarLightboxGlobal, que está bien para abrir el lightbox) ...
+    const nuevosEnlacesGaleria = Array.from(document.querySelectorAll(selectorEnlaces));
+    if (nuevosEnlacesGaleria.length === 0) return;
+
+    nuevosEnlacesGaleria.forEach((enlace, indice) => {
+        if (enlace.dataset.lightboxInitialized === 'true') return;
+
+        const nuevoEnlace = enlace.cloneNode(true);
+        if(enlace.parentNode) enlace.parentNode.replaceChild(nuevoEnlace, enlace);
+
+        nuevoEnlace.addEventListener('click', function(evento) {
+            evento.preventDefault();
+            const esGaleriaDeCliente = this.getAttribute('data-lightbox') === 'clipremium-gallery';
+            abrirLightbox(nuevosEnlacesGaleria, indice, esGaleriaDeCliente);
+        });
+        nuevoEnlace.dataset.lightboxInitialized = 'true';
+    });
+};
+
+
+// --- EVENT LISTENERS PARA EL LIGHTBOX (CIERRE Y NAVEGACIÓN) ---
+if (lightboxElement) {
+    // Listener para el botón de cerrar
+    if (cerrarLightboxBtn) {
+        cerrarLightboxBtn.addEventListener('click', () => {
+            // console.log('Cerrar botón clickeado'); // Para depuración
+            cerrarLightboxFunction();
+        });
+    }
+
+    // Listener para la flecha "Anterior"
+    if (controlPrevLightbox) {
+        controlPrevLightbox.addEventListener('click', () => {
+            // console.log('Prev botón clickeado'); // Para depuración
+            if (indiceActualLightbox > 0) {
+                mostrarImagenLightbox(indiceActualLightbox - 1);
+            }
+        });
+    }
+
+    // Listener para la flecha "Siguiente"
+    if (controlNextLightbox) {
+        controlNextLightbox.addEventListener('click', () => {
+            // console.log('Next botón clickeado'); // Para depuración
+            if (indiceActualLightbox < galeriaActivaLightbox.length - 1) {
+                mostrarImagenLightbox(indiceActualLightbox + 1);
+            }
+        });
+    }
+
+    // Opcional: Cerrar el lightbox si se hace clic fuera del contenido principal (en el fondo oscuro)
+    lightboxElement.addEventListener('click', function(event) {
+        // Asegúrate de que el clic es en el propio lightboxElement y no en uno de sus hijos
+        // como la imagen, la barra de herramientas o los botones de navegación.
+        if (event.target === lightboxElement) {
+            cerrarLightboxFunction();
+        }
+    });
+
+    // Opcional: Navegación con teclas de flecha y cierre con Escape
+    document.addEventListener('keydown', function(event) {
+        if (lightboxElement.classList.contains('activo')) { // Solo si el lightbox está visible
+            if (event.key === 'Escape') {
+                cerrarLightboxFunction();
+            } else if (event.key === 'ArrowLeft') {
+                if (controlPrevLightbox && !controlPrevLightbox.classList.contains('hidden')) {
+                    controlPrevLightbox.click(); // Simula un clic en el botón "anterior"
+                }
+            } else if (event.key === 'ArrowRight') {
+                if (controlNextLightbox && !controlNextLightbox.classList.contains('hidden')) {
+                    controlNextLightbox.click(); // Simula un clic en el botón "siguiente"
+                }
+            }
+        }
+    });
+
+    // Lógica de zoom para la imagen dentro del lightbox (si la tienes o quieres añadirla)
+    if (imagenLightboxElement) {
+        imagenLightboxElement.addEventListener('click', function(e) {
+            e.stopPropagation(); // Importante: Evita que el clic en la imagen cierre el lightbox si tienes el listener en lightboxElement
+            // Aquí tu lógica de zoom, por ejemplo:
+            // this.classList.toggle('zoomed-in');
+            // isLightboxImageZoomed = this.classList.contains('zoomed-in');
+            // this.style.cursor = isLightboxImageZoomed ? 'zoom-out' : 'zoom-in';
+            // console.log("Zoom state:", isLightboxImageZoomed);
+        });
+    }
+}
     // ... (tus listeners globales para zoom, cierre, navegación, sin cambios) ...
 }
 

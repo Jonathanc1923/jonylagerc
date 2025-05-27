@@ -157,7 +157,7 @@ img {
 #historia p:last-of-type { margin-bottom: 0; }
 
 /* Galería de Miniaturas Estética (Común para index.html y clipremium.html) */
-#galeria-inicio h2, 
+#galeria-inicio h2,
 #gallery-title-premium {
     text-align: center;
     margin-bottom: 3rem;
@@ -178,10 +178,10 @@ img {
     position: relative;
     overflow: hidden;
     border-radius: 10px;
-    background-color: var(--color-secundario); 
+    background-color: var(--color-secundario);
     box-shadow: 0 6px 12px rgba(0,0,0,0.25);
     transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
-    height: 250px; 
+    height: 250px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -203,7 +203,7 @@ img {
 .item-galeria img {
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain; 
+    object-fit: contain;
     display: block;
     margin: auto;
     border-radius: 6px;
@@ -227,7 +227,7 @@ img {
 }
 .download-button:hover {
     background-color: var(--color-acento-hover);
-    transform: scale(1.05); 
+    transform: scale(1.05);
 }
 .download-button svg { width: 14px; height: 14px; margin-right: 6px; fill: var(--color-primario); }
 
@@ -244,7 +244,7 @@ img {
     position: relative; text-align: center; display: flex; flex-direction: column;
     justify-content: center; align-items: center;
     width: 100%; height: 100%;
-    overflow: auto; 
+    overflow: auto;
     padding-bottom: 80px;
 }
 
@@ -263,9 +263,9 @@ img {
 .titulo-lightbox {
     position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
     color: #fff; text-align: center; font-size: 1.5rem;
-    width: auto; max-width: calc(100% - 160px); 
+    width: auto; max-width: calc(100% - 160px);
     background-color: rgba(0,0,0,0.7); padding: 4px 12px; border-radius: 3px;
-    z-index: 1001; 
+    z-index: 1001;
 }
 .cerrar-lightbox {
     position: absolute; top: 15px; right: 20px; color: #fff;
@@ -290,8 +290,7 @@ img {
     position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
     background-color: rgba(35, 35, 35, 0.9); padding: 8px 10px; border-radius: 8px;
     display: none; /* OCULTO POR DEFECTO GLOBALMENTE, JS LO MUESTRA SELECTIVAMENTE */
-    gap: 8px; z-index: 1003; 
-    /* align-items: flex-end; <-- CAMBIADO a center para el nuevo título */
+    gap: 8px; z-index: 1003;
     align-items: center; /* Para mejor alineación vertical del título y los botones */
     box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
 }
@@ -309,34 +308,34 @@ img {
 .toolbar-title {
     display: flex;
     align-items: center;
-    padding: 0px 8px; 
-    color: var(--color-acento); 
-    font-family: var(--fuente-parrafos); 
-    font-size: 1.4rem; 
+    padding: 0px 8px;
+    color: var(--color-acento);
+    font-family: var(--fuente-parrafos);
+    font-size: 1.4rem;
     font-weight: bold;
-    white-space: nowrap; 
+    white-space: nowrap;
     margin-right: auto; /* Empuja los botones de herramientas a la derecha */
 }
 
 .toolbar-title-icon {
     width: 20px;
     height: 20px;
-    fill: currentColor; 
-    margin-right: 6px; 
+    fill: currentColor;
+    margin-right: 6px;
 }
 
 .toolbar-title-text {
-    line-height: 1; 
+    line-height: 1;
 }
 /* --- FIN DE NUEVOS ESTILOS --- */
 
 .slider-container, .filters-panel {
-    position: absolute; bottom: calc(100% + 8px); 
-    left: 50%; 
-    transform: translateX(-50%); 
+    position: absolute; bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
     background-color: rgba(50, 50, 50, 0.95); padding: 12px; border-radius: 6px;
     box-shadow: 0 -2px 15px rgba(0,0,0,0.3); z-index: 1004;
-    display: none; 
+    display: none;
     align-items: center;
 }
 .slider-container { width: 180px; gap: 8px; }
@@ -386,7 +385,7 @@ img {
     .hero { min-height: calc(60vh - var(--header-height-mobile)); padding: 3rem 0; }
     .contenido-hero h1 { font-size: 3.2rem; }
     .contenido-hero .eslogan { font-size: 1.7rem; }
-    
+
     #historia h2, #galeria-inicio h2, #gallery-title-premium { font-size: 2.8rem; }
 
     .galeria-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
@@ -432,7 +431,23 @@ img {
     .item-galeria { height: 150px; border-radius: 6px; }
     .item-galeria img { border-radius: 3px; }
     .galeria-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; }
-    .lightbox-control { display: none !important; }
+
+    /* .lightbox-control { display: none !important; } */ /* LÍNEA CORREGIDA/COMENTADA */
+    /* Si después de comentar la línea anterior, los botones son muy grandes o necesitan ajustes específicos para 480px o menos, puedes añadir estilos aquí: */
+    /* Por ejemplo: */
+    /*
+    .lightbox-control {
+        font-size: 1.8rem;
+        padding: 6px 8px;
+    }
+    .lightbox-control.prev {
+        left: 3px;
+    }
+    .lightbox-control.next {
+        right: 3px;
+    }
+    */
+
     .editor-toolbar { flex-wrap: wrap; justify-content: center; bottom: 5px; }
     .tool-button { min-width: 40px; }
 
