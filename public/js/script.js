@@ -12,7 +12,7 @@ const controlNextLightbox = lightboxElement ? lightboxElement.querySelector('.li
 
 let isLightboxImageZoomed = false;
 let currentOriginalWasabiUrlForLightbox = '';
-let currentIdAccesoGaleriaParaLog = null; // Se llenará desde window.idAccesoGaleriaCliente o al abrir lightbox
+let currentIdAccesoGaleriaParaLog = null; // Se llenará desde window.idAccesoGaleriaCliente
 
 // Selectores para Herramientas de Edición
 const editorToolbar = document.getElementById('editor-toolbar');
@@ -54,15 +54,13 @@ let currentLightboxFilters = {
 
 // --- Funciones del Lightbox y Edición ---
 
-async function registrarAccionFinal(configuracionDeEdicion) {
-    // Usa el ID de acceso que se guardó globalmente desde clipremium.html
-    // o el que se estableció al abrir el lightbox para un cliente.
+// IMPORTANTE: Definición de registrarAccionFinal
+async function registrarAccionFinal(tipoAccion, configuracionDeEdicion) {
     const idAccesoActual = window.idAccesoGaleriaCliente || currentIdAccesoGaleriaParaLog;
 
-    // Solo registrar si estamos en una galería de cliente y tenemos un ID de acceso.
     if (!editorToolbar || editorToolbar.style.display === 'none' || idAccesoActual === null || idAccesoActual === undefined) {
-        if (editorToolbar && editorToolbar.style.display !== 'none') { // Solo advertir si se esperaba registrar
-             console.warn("Registro de descarga omitido: Se requiere un ID de Acceso de cliente válido.", { idDetectado: idAccesoActual });
+        if (editorToolbar && editorToolbar.style.display !== 'none') {
+             console.warn("Registro de acción final omitido: Se requiere un ID de Acceso de cliente válido.", { idDetectado: idAccesoActual, tipo: tipoAccion });
         }
         return; 
     }
@@ -86,19 +84,19 @@ async function registrarAccionFinal(configuracionDeEdicion) {
     };
 
     try {
-        console.log("Frontend: Enviando registro de descarga final al endpoint /registrar-descarga:", payload);
+        console.log(`Frontend: Enviando registro de '${tipoAccion}' al endpoint /registrar-descarga:`, payload);
         const response = await fetch('/registrar-descarga', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         if (!response.ok) {
-            console.error('Error del backend al registrar descarga:', await response.text());
+            console.error(`Error del backend al registrar '${tipoAccion}':`, await response.text());
         } else {
-            console.log('Registro de descarga enviado exitosamente al backend.');
+            console.log(`Registro de '${tipoAccion}' (descarga) enviado exitosamente.`);
         }
     } catch (error) {
-        console.error('Fallo de red al enviar registro de descarga:', error);
+        console.error(`Fallo de red al enviar registro de '${tipoAccion}':`, error);
     }
 }
 
@@ -161,10 +159,7 @@ function mostrarImagenLightbox(indice) {
 
     currentOriginalWasabiUrlForLightbox = enlaceActual.getAttribute('data-original-wasabi-url') || enlaceActual.getAttribute('href');
     
-    // Mantener el currentIdAccesoGaleriaParaLog que se estableció al abrir el lightbox
-    // No lo actualizamos aquí a menos que tengamos una nueva fuente de ID por imagen (lo cual no parece ser el caso)
-    // window.idAccesoGaleriaCliente (establecido desde clipremium.html) es la fuente principal.
-    if (!currentIdAccesoGaleriaParaLog && typeof window.idAccesoGaleriaCliente !== 'undefined') {
+    if (typeof window.idAccesoGaleriaCliente !== 'undefined') { 
         currentIdAccesoGaleriaParaLog = window.idAccesoGaleriaCliente;
     }
     
@@ -205,18 +200,14 @@ function abrirLightbox(galeria, indice, esGaleriaDeCliente = false) {
     if (!lightboxElement) { console.error("Lightbox element not found."); return; }
     galeriaActivaLightbox = galeria;
     
-    // Establecer currentIdAccesoGaleriaParaLog basado en window.idAccesoGaleriaCliente
-    // Asumimos que window.idAccesoGaleriaCliente se establece en clipremium.html después del login.
     if (esGaleriaDeCliente && typeof window.idAccesoGaleriaCliente !== 'undefined') {
         currentIdAccesoGaleriaParaLog = window.idAccesoGaleriaCliente;
         console.log("ID de Acceso para logging establecido al ABRIR Lightbox:", currentIdAccesoGaleriaParaLog);
     } else if (esGaleriaDeCliente) {
-        // Si es galería de cliente pero no hay ID, podría ser un problema o una galería pública con herramientas.
-        // Por ahora, si no hay ID, la función registrarAccionFinal no enviará nada.
         console.warn("Abriendo lightbox de cliente pero window.idAccesoGaleriaCliente no está definido.");
-        currentIdAccesoGaleriaParaLog = null; // Asegurar que sea null si no está definido
+        currentIdAccesoGaleriaParaLog = null;
     } else {
-        currentIdAccesoGaleriaParaLog = null; // No es galería de cliente, no loguear
+        currentIdAccesoGaleriaParaLog = null; 
     }
 
     if (editorToolbar) {
@@ -252,7 +243,7 @@ function cerrarLightboxFunction() {
     }
     isLightboxImageZoomed = false;
     currentOriginalWasabiUrlForLightbox = '';
-    currentIdAccesoGaleriaParaLog = null; // Limpiar ID al cerrar lightbox
+    currentIdAccesoGaleriaParaLog = null; 
 }
 
 window.inicializarLightboxGlobal = function(selectorEnlaces) {
@@ -260,17 +251,14 @@ window.inicializarLightboxGlobal = function(selectorEnlaces) {
     if (nuevosEnlacesGaleria.length === 0) return;
 
     nuevosEnlacesGaleria.forEach((enlace, indice) => {
-        // Evitar re-adjuntar listeners si ya se hizo (simple check)
         if (enlace.dataset.lightboxInitialized === 'true') return;
 
-        const nuevoEnlace = enlace.cloneNode(true); // Clonar para limpiar listeners anteriores si fuera necesario
+        const nuevoEnlace = enlace.cloneNode(true); 
         if(enlace.parentNode) enlace.parentNode.replaceChild(nuevoEnlace, enlace);
         
         nuevoEnlace.addEventListener('click', function(evento) {
             evento.preventDefault();
             const esGaleriaDeCliente = this.getAttribute('data-lightbox') === 'clipremium-gallery';
-            // Para la nueva lógica de logging, el ID se toma de window.idAccesoGaleriaCliente
-            // que debe ser establecido por clipremium.html
             abrirLightbox(nuevosEnlacesGaleria, indice, esGaleriaDeCliente);
         });
         nuevoEnlace.dataset.lightboxInitialized = 'true';
@@ -318,8 +306,7 @@ function configurarListenersDeEdicion() {
     filterOptions = Array.from(editorToolbar.querySelectorAll('.filter-option'));
     console.log("Configurando listeners de edición para la barra de herramientas...");
 
-    // Sliders (Brillo, Contraste, Saturación)
-    // SOLO actualizan currentLightboxFilters y la previsualización en 'input'
+    // Sliders (Brillo, Contraste, Saturación) - SOLO ACTUALIZAN UI Y ESTADO LOCAL
     if (toolBrightness && brightnessSliderContainer && brightnessSlider && brightnessValueDisplay) {
         toolBrightness.addEventListener('click', (e) => { e.stopPropagation(); const isActive = brightnessSliderContainer.style.display === 'flex'; hideAllEditPanels(); updateActiveToolButton(isActive ? null : toolBrightness); brightnessSliderContainer.style.display = isActive ? 'none' : 'flex'; });
         brightnessSlider.addEventListener('input', (e) => { currentLightboxFilters.brightness = parseInt(e.target.value); if(brightnessValueDisplay) brightnessValueDisplay.textContent = `${currentLightboxFilters.brightness}%`; applyCssFiltersToLightboxImage(); });
@@ -336,13 +323,13 @@ function configurarListenersDeEdicion() {
         if(saturationSliderContainer) saturationSliderContainer.addEventListener('click', e => e.stopPropagation());
     }
     
-    // Botón para abrir el panel de Filtros
+    // Botón para abrir panel de Filtros
     if (toolFilters && filtersPanelContainer) {
         toolFilters.addEventListener('click', (e) => { e.stopPropagation(); const isActive = filtersPanelContainer.style.display === 'flex'; hideAllEditPanels(); updateActiveToolButton(isActive ? null : toolFilters); filtersPanelContainer.style.display = isActive ? 'none' : 'flex'; });
         if(filtersPanelContainer) filtersPanelContainer.addEventListener('click', e => e.stopPropagation());
     }
 
-    // Botones de Filtro individuales (NO registran, solo actualizan UI y estado)
+    // Botones de Filtro individuales (SOLO ACTUALIZAN UI Y ESTADO LOCAL)
     if (filterOptions.length > 0) {
         filterOptions.forEach(button => {
             button.addEventListener('click', function(e) {
@@ -352,6 +339,8 @@ function configurarListenersDeEdicion() {
                 resetImageAdjustments(); 
                 currentLightboxFilters.activeNamedFilter = filterName; 
 
+                // Lógica del switch para aplicar previsualizaciones CSS y ajustar currentLightboxFilters
+                // (Esta es la lógica que ya tenías y que funciona para los filtros CSS)
                 switch (filterName) {
                     case 'original': break;
                     case 'grayscale': currentLightboxFilters.grayscale = 100; currentLightboxFilters.saturate = 0; if (saturationSlider) saturationSlider.value = 0; if (saturationValueDisplay) saturationValueDisplay.textContent = '0%'; break;
@@ -365,7 +354,7 @@ function configurarListenersDeEdicion() {
                     case 'kodak_gold': currentLightboxFilters.saturate = 110; currentLightboxFilters.brightness = 105; currentLightboxFilters.contrast = 108; currentLightboxFilters.sepia = 10; currentLightboxFilters.hueRotate = -8; if (saturationSlider) saturationSlider.value = 110; if (saturationValueDisplay) saturationValueDisplay.textContent = '110%'; if (contrastSlider) contrastSlider.value = 108; if (contrastValueDisplay) contrastValueDisplay.textContent = '108%'; if (brightnessSlider) brightnessSlider.value = 105; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '105%'; break;
                     case 'mate_look': currentLightboxFilters.saturate = 75; currentLightboxFilters.contrast = 88; currentLightboxFilters.brightness = 108; if (saturationSlider) saturationSlider.value = 75; if (saturationValueDisplay) saturationValueDisplay.textContent = '75%'; if (contrastSlider) contrastSlider.value = 88; if (contrastValueDisplay) contrastValueDisplay.textContent = '88%'; if (brightnessSlider) brightnessSlider.value = 108; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '108%'; break;
                     case 'aden_filter': currentLightboxFilters.saturate = 85; currentLightboxFilters.brightness = 110; currentLightboxFilters.contrast = 90; currentLightboxFilters.hueRotate = -20; currentLightboxFilters.grayscale = 0; currentLightboxFilters.sepia = 0; if (saturationSlider) saturationSlider.value = 85; if (saturationValueDisplay) saturationValueDisplay.textContent = '85%'; if (brightnessSlider) brightnessSlider.value = 110; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '110%'; if (contrastSlider) contrastSlider.value = 90; if (contrastValueDisplay) contrastValueDisplay.textContent = '90%'; break;
-                    case 'teal_orange': currentLightboxFilters.saturate = 120; currentLightboxFilters.contrast = 110; if (saturationSlider) saturationSlider.value = 120; if (saturationValueDisplay) saturationValueDisplay.textContent = '120%'; if (contrastSlider) contrastSlider.value = 110; if (contrastValueDisplay) contrastValueDisplay.textContent = '110%'; break;
+                    case 'teal_orange': currentLightboxFilters.saturate = 120; currentLightboxFilters.contrast = 110; if (saturationSlider) saturationSlider.value = 120; if (saturationValueDisplay) saturationValueDisplay.textContent = '120%'; if (contrastSlider) contrastSlider.value = 110; if (contrastValueDisplay) contrastValueDisplay.textContent = '110%'; break; 
                     case 'cinematic_look': currentLightboxFilters.saturate = 80; currentLightboxFilters.contrast = 115; currentLightboxFilters.sepia = 5; currentLightboxFilters.grayscale = 0; if (saturationSlider) saturationSlider.value = 80; if (saturationValueDisplay) saturationValueDisplay.textContent = '80%'; if (contrastSlider) contrastSlider.value = 115; if (contrastValueDisplay) contrastValueDisplay.textContent = '115%'; break;
                     default: console.warn("Filtro nombrado no completamente definido para previsualización:", filterName); break;
                 }
@@ -376,7 +365,7 @@ function configurarListenersDeEdicion() {
         });
     }
 
-    // Botón de Reset (NO REGISTRA)
+    // Botón de Reset (NO REGISTRA NADA)
     if (toolReset) { 
         toolReset.addEventListener('click', (e) => { 
             e.stopPropagation(); 
@@ -412,14 +401,12 @@ function configurarListenersDeEdicion() {
             }
             
             // Objeto con la configuración final de edición para guardar en la BD
-            // Este objeto usa los valores de currentLightboxFilters directamente (ej. brightness 0-200)
             const configuracionEdicionParaGuardarEnBD = { ...currentLightboxFilters }; 
 
             // Llamar a la función de registro ANTES de la descarga real
             await registrarAccionFinal('descarga_cliente', configuracionEdicionParaGuardarEnBD);
 
             // Preparar el objeto de ediciones para el endpoint de procesamiento de imagen
-            // (Este es el formato que tu endpoint /procesar-y-descargar-imagen espera, con valores 0-2 o booleanos)
             if (spanElement) spanElement.textContent = 'Procesando Imagen...';
             const editsParaProcesamiento = {
                 brightness: currentLightboxFilters.brightness / 100.0,
@@ -476,8 +463,19 @@ function configurarListenersDeEdicion() {
         });
     }
 
-    // Listener para cerrar paneles con clic fuera (sin cambios)
-    document.addEventListener('click', function(event) { /* ... */ });
+    // Listener para cerrar paneles con clic fuera
+    document.addEventListener('click', function(event) {
+        if(lightboxElement && lightboxElement.classList.contains('activo') && 
+           editorToolbar && editorToolbar.style.display !== 'none') {
+            let clickedOnToolbarOrPanel = false;
+            if (editorToolbar.contains(event.target)) clickedOnToolbarOrPanel = true;
+            const panels = [brightnessSliderContainer, contrastSliderContainer, saturationSliderContainer, filtersPanelContainer];
+            panels.forEach(panel => { if (panel && panel.style.display !== 'none' && panel.contains(event.target)) clickedOnToolbarOrPanel = true; });
+            if (!clickedOnToolbarOrPanel) {
+                hideAllEditPanels(); updateActiveToolButton(null);
+            }
+        }
+    });
 } // Fin de configurarListenersDeEdicion()
 
 
@@ -487,33 +485,59 @@ document.addEventListener('DOMContentLoaded', function() {
         filterOptions = Array.from(editorToolbar.querySelectorAll('.filter-option'));
         configurarListenersDeEdicion(); 
     } else {
-        console.log("Barra de herramientas de edición (editorToolbar) no encontrada en esta página. Listeners de edición no configurados.");
+        // console.log("Barra de herramientas de edición (editorToolbar) no encontrada en esta página.");
     }
-
-    // ... (resto de tu código DOMContentLoaded: currentYear, menuToggle, navLinks, inicializarLightboxGlobal) ...
-    // Asegúrate de que inicializarLightboxGlobal se llame para las galerías correctas
-    // y que el ID de acceso del cliente (window.idAccesoGaleriaCliente) se establezca
-    // en clipremium.html después de un login exitoso.
     
     const currentYearSpanGlobal = document.getElementById('currentYear'); 
     if (currentYearSpanGlobal) currentYearSpanGlobal.textContent = new Date().getFullYear();
 
     const menuToggleGlobal = document.querySelector('header .menu-toggle');
     const navGlobal = document.querySelector('header .navegacion-principal'); 
-    if (menuToggleGlobal && navGlobal) { /* ... (lógica del menú sin cambios) ... */ }
+    if (menuToggleGlobal && navGlobal) {
+        if (!navGlobal.dataset.menuInitialized) { 
+            menuToggleGlobal.addEventListener('click', function() {
+                navGlobal.classList.toggle('nav-abierta');
+                this.setAttribute('aria-expanded', navGlobal.classList.contains('nav-abierta'));
+                this.classList.toggle('is-active');
+            });
+            navGlobal.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (navGlobal.classList.contains('nav-abierta')) {
+                        navGlobal.classList.remove('nav-abierta');
+                        menuToggleGlobal.setAttribute('aria-expanded', 'false');
+                        menuToggleGlobal.classList.remove('is-active');
+                    }
+                });
+            });
+            navGlobal.dataset.menuInitialized = 'true';
+        }
+    }
     
     const navLinksGlobal = document.querySelectorAll('.navegacion-principal a');
-    if (navLinksGlobal.length > 0) { /* ... (lógica de active link sin cambios) ... */ }
+    if (navLinksGlobal.length > 0) {
+        const currentUrlGlobal = window.location.href.split('#')[0].split('?')[0];
+        navLinksGlobal.forEach(link => {
+            try {
+                const linkHref = link.getAttribute('href');
+                if (linkHref && linkHref.trim() !== '' && linkHref !== '#') { 
+                    const linkUrl = new URL(linkHref, document.baseURI).href.split('#')[0].split('?')[0];
+                    if (linkUrl === currentUrlGlobal) link.classList.add('activo');
+                    else link.classList.remove('activo');
+                } else if (link.getAttribute('href') === 'index.html' && (window.location.pathname === '/' || window.location.pathname === '/index.html')) {
+                    link.classList.add('activo');
+                }
+            } catch (e) { /* Ignorar errores de URL inválida */ }
+        });
+    }
 
     if (document.getElementById('galeria-inicio')) {
         window.inicializarLightboxGlobal('#galeria-inicio a[data-lightbox="galeria-principal"]');
     }
     if (document.getElementById('clipremium-gallery-container')) { 
-         // Esta llamada DEBE ocurrir DESPUÉS de que las imágenes de la galería del cliente
-         // se hayan cargado dinámicamente en el DOM.
+         // Idealmente, llamar a window.inicializarLightboxGlobal DESPUÉS de que las imágenes
+         // de la galería del cliente se carguen dinámicamente en clipremium.html.
          // window.inicializarLightboxGlobal('#clipremium-gallery-container a[data-lightbox="clipremium-gallery"]');
-         // Es mejor que la función que carga las imágenes en clipremium.html llame a inicializarLightboxGlobal.
-         console.log("Recordatorio: inicializarLightboxGlobal para #clipremium-gallery-container debe llamarse después de cargar imágenes.");
+         console.log("Recordatorio: inicializarLightboxGlobal para #clipremium-gallery-container debe llamarse después de cargar imágenes en esa página.");
     }
     
     console.log("Jony Lager - Script principal cargado y DOM listo.");
