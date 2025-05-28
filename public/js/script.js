@@ -69,7 +69,7 @@ let currentLightboxFilters = {
 // --- URL BASE PARA LA API DE PYTHON ---
 // Detecta si el frontend está corriendo en Render. AJUSTA 'jonylagerpy.onrender.com' Y 'tu-frontend.onrender.com' con tus URLs reales.
 const IS_FRONTEND_DEPLOYED = window.location.hostname.endsWith('onrender.com'); // O una forma más específica si tu frontend tiene otro dominio en Render
-const PYTHON_API_BASE_URL = IS_FRONTEND_DEPLOYED ? 'https://jonylagerpy.onrender.com' : 'http://localhost:5000';
+const PYTHON_API_BASE_URL = IS_FRONTEND_DEPLOYED ? 'https://jonylagerpy.onrender.com' : 'http://localhost:10000';
 // Si quieres que tu frontend local SIEMPRE use el backend desplegado, puedes poner:
 // const PYTHON_API_BASE_URL = 'https://jonylagerpy.onrender.com';
 
