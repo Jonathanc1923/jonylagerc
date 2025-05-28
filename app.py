@@ -1,4 +1,6 @@
 # app.py
+import faulthandler
+faulthandler.enable()
 from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from rembg import remove, new_session # Eliminado get_model_names de aquí
