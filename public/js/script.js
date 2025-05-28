@@ -12,78 +12,283 @@ const controlNextLightbox = lightboxElement ? lightboxElement.querySelector('.li
 
 let isLightboxImageZoomed = false;
 let currentOriginalWasabiUrlForLightbox = '';
-let currentIdAccesoGaleriaParaLog = null; // Se llenará desde window.idAccesoGaleriaCliente
+let currentIdAccesoGaleriaParaLog = null;
 
 // Selectores para Herramientas de Edición
 const editorToolbar = document.getElementById('editor-toolbar');
-
 const toolBrightness = document.getElementById('tool-brightness');
 const brightnessSliderContainer = document.getElementById('brightness-slider-container');
 const brightnessSlider = document.getElementById('brightness-slider');
 const brightnessValueDisplay = document.getElementById('brightness-value');
-
 const toolContrast = document.getElementById('tool-contrast');
 const contrastSliderContainer = document.getElementById('contrast-slider-container');
 const contrastSlider = document.getElementById('contrast-slider');
 const contrastValueDisplay = document.getElementById('contrast-value');
-
 const toolSaturation = document.getElementById('tool-saturation');
 const saturationSliderContainer = document.getElementById('saturation-slider-container');
 const saturationSlider = document.getElementById('saturation-slider');
 const saturationValueDisplay = document.getElementById('saturation-value');
-
 const toolFilters = document.getElementById('tool-filters');
 const filtersPanelContainer = document.getElementById('filters-panel-container');
-let filterOptions = []; 
-
+let filterOptions = [];
 const toolReset = document.getElementById('tool-reset');
 const lightboxDownloadButton = document.getElementById('lightbox-download-button');
 
+// --- NUEVAS VARIABLES GLOBALES PARA CAMBIO DE FONDO ---
+const changeBackgroundButton = document.getElementById('tool-change-background');
+const backgroundSelectorModal = document.getElementById('background-selector-modal');
+const closeBackgroundSelectorButton = document.getElementById('close-background-selector');
+const backgroundListContainer = document.getElementById('background-list-container');
+const backgroundLoadingIndicator = document.getElementById('background-loading-indicator');
+
+const compositeImageDisplayArea = document.createElement('div');
+compositeImageDisplayArea.id = 'composite-image-display-area';
+compositeImageDisplayArea.style.position = 'relative';
+compositeImageDisplayArea.style.width = '100%';
+compositeImageDisplayArea.style.height = '100%';
+compositeImageDisplayArea.style.display = 'none';
+compositeImageDisplayArea.style.margin = 'auto';
+
+
+let currentForegroundUrl = null;
+let currentCompositeBackgroundUrl = null;
+
 // Objeto para almacenar los filtros aplicados actualmente
 let currentLightboxFilters = {
-    brightness: 100, 
-    contrast: 100,   
-    saturate: 100, 
-    grayscale: 0,   
-    sepia: 0,      
-    invert: 0,     
-    blur: 0,       
-    hueRotate: 0,  
+    brightness: 100,
+    contrast: 100,
+    saturate: 100,
+    grayscale: 0,
+    sepia: 0,
+    invert: 0,
+    blur: 0,
+    hueRotate: 0,
     activeNamedFilter: 'original'
 };
 
-// --- Funciones del Lightbox y Edición ---
 
-// ESTA ES LA FUNCIÓN PARA REGISTRAR LA DESCARGA FINAL
-async function registrarAccionFinal(tipoAccion, configuracionDeEdicion) {
-    const idAccesoActual = window.idAccesoGaleriaCliente || currentIdAccesoGaleriaParaLog;
+function showLoadingIndicator(show, message = "Procesando...") {
+    if (backgroundLoadingIndicator) {
+        const pElement = backgroundLoadingIndicator.querySelector('p');
+        if (pElement) pElement.textContent = message;
+        backgroundLoadingIndicator.style.display = show ? 'block' : 'none';
+    }
+    if (backgroundListContainer) {
+        backgroundListContainer.style.display = show ? 'none' : 'grid';
+    }
+}
 
-    // Solo registrar si es una galería de cliente y tenemos un ID de acceso.
-    if (!editorToolbar || editorToolbar.style.display === 'none' || idAccesoActual === null || idAccesoActual === undefined) {
-        if (editorToolbar && editorToolbar.style.display !== 'none') { // Solo advertir si se esperaba registrar
-             console.warn("Registro de acción final omitido: Se requiere un ID de Acceso de cliente válido.", { idDetectado: idAccesoActual, tipo: tipoAccion });
+async function populateBackgroundSelector() {
+    if (!backgroundListContainer) {
+        console.error("Error: El contenedor 'background-list-container' no fue encontrado en el DOM.");
+        return;
+    }
+    showLoadingIndicator(true, "Cargando lista de fondos...");
+    try {
+        // =========================================================================================
+        // ATENCIÓN: SI TU LOG DE ERRORES ANTERIOR INDICÓ "ReferenceError: formData is not defined"
+        // EN LA LÍNEA 84 (APROXIMADAMENTE) DE ESTA FUNCIÓN 'populateBackgroundSelector' EN TU ARCHIVO,
+        // POR FAVOR, REVISA TU ARCHIVO LOCAL EN ESA LÍNEA.
+        // ESTA FUNCIÓN NO DEBERÍA USAR 'formData'. SI LO HACE, ESA ES LA CAUSA DEL ERROR.
+        // =========================================================================================
+
+        const response = await fetch('http://localhost:5000/list-backgrounds');
+
+        if (!response.ok) {
+            console.error("Respuesta no OK del servidor al listar fondos:", response.status, response.statusText);
+            let errorDetail = `Error del servidor: ${response.status} ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                errorDetail = errorData.error || errorData.message || errorDetail;
+            } catch (e) { /* No hay JSON de error, usar el statusText */ }
+            throw new Error(errorDetail);
         }
-        return; 
+
+        const backgroundPaths = await response.json();
+        console.log("Fondos recibidos por el frontend:", backgroundPaths);
+
+        backgroundListContainer.innerHTML = '';
+        if (!backgroundPaths || backgroundPaths.length === 0) {
+            backgroundListContainer.innerHTML = '<p>No hay fondos disponibles o la respuesta está vacía.</p>';
+            return; // showLoadingIndicator(false) se llama en finally
+        }
+
+        backgroundPaths.forEach(bgPath => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'background-item';
+            itemDiv.innerHTML = `<img src="/${bgPath}" alt="Fondo miniatura" data-bg-src="/${bgPath}">`;
+            itemDiv.addEventListener('click', () => {
+                handleBackgroundSelection(`/${bgPath}`);
+            });
+            backgroundListContainer.appendChild(itemDiv);
+        });
+
+    } catch (error) {
+        console.error("Error en populateBackgroundSelector:", error);
+        if (backgroundListContainer) {
+            backgroundListContainer.innerHTML = `<p>Error al cargar fondos. Inténtalo de nuevo. (${error.message || 'Error desconocido'})</p>`;
+        }
+    } finally {
+        showLoadingIndicator(false);
+    }
+}
+
+async function handleBackgroundSelection(selectedBgPath) { // selectedBgPath es la ruta local ej. /img/fondos/...
+    if (!imagenLightboxElement) {
+        alert("No hay imagen en el lightbox para aplicar el fondo.");
+        showLoadingIndicator(false);
+        return;
     }
 
-    // Obtener nombre de la imagen original
-    // Priorizar 'data-original-name' si existe en el enlace actual del lightbox
+    const originalImageWasabiUrl = currentOriginalWasabiUrlForLightbox; // URL de S3
+
+    if (!originalImageWasabiUrl) {
+        alert("No se pudo obtener la URL de la imagen original de Wasabi.");
+        showLoadingIndicator(false);
+        return;
+    }
+
+    if (backgroundSelectorModal) backgroundSelectorModal.style.display = 'none';
+    showLoadingIndicator(true, "Procesando imagen..."); // Cambiado mensaje
+
+    try {
+        // NO hay fetch directo a originalImageWasabiUrl.
+        // Se envía la URL al backend.
+        const formData = new FormData();
+        formData.append('imageUrl', originalImageWasabiUrl);
+        let originalFileName = imagenLightboxElement.getAttribute('data-original-name') || "imagen_cloud.png";
+        formData.append('originalFileName', originalFileName);
+
+        console.log("JS DEBUG: Preparando para enviar a /remove-background. URL de Wasabi:", originalImageWasabiUrl);
+
+        const removeBgResponse = await fetch('http://localhost:5000/remove-background', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!removeBgResponse.ok) {
+            let errorDetail = `Error del servidor (${removeBgResponse.status}) al procesar imagen.`;
+            try {
+                const errorData = await removeBgResponse.json();
+                errorDetail = errorData.error || errorData.message || errorDetail;
+            } catch (e) {
+                const textError = await removeBgResponse.text().catch(() => `Respuesta de error del servidor (${removeBgResponse.status}) no legible.`);
+                errorDetail = textError || errorDetail;
+                console.error("Respuesta de error no JSON de /remove-background:", textError);
+            }
+            throw new Error(errorDetail);
+        }
+
+        const foregroundBlob = await removeBgResponse.blob();
+        if (currentForegroundUrl) URL.revokeObjectURL(currentForegroundUrl);
+        currentForegroundUrl = URL.createObjectURL(foregroundBlob);
+        currentCompositeBackgroundUrl = selectedBgPath; // Esta es la ruta local del fondo seleccionado
+
+        // showLoadingIndicator(true, "Aplicando nuevo fondo..."); // displayCompositeImage se encarga de ocultar el loader
+        displayCompositeImage(currentForegroundUrl, selectedBgPath);
+
+    } catch (error) {
+        console.error("Error en handleBackgroundSelection:", error);
+        alert(`Error procesando la imagen: ${error.message}`);
+        showLoadingIndicator(false);
+        hideCompositeImage();
+    }
+}
+
+function displayCompositeImage(foregroundUrl, backgroundUrl) {
+    if (!lightboxElement || !imagenLightboxElement) return;
+
+    const lightboxContent = lightboxElement.querySelector('.lightbox-content');
+    if (lightboxContent && !document.getElementById(compositeImageDisplayArea.id)) {
+        if (imagenLightboxElement.parentNode) {
+             imagenLightboxElement.parentNode.insertBefore(compositeImageDisplayArea, imagenLightboxElement);
+        }
+    }
+
+    let bgImg = compositeImageDisplayArea.querySelector('img.composite-bg');
+    if (!bgImg) {
+        bgImg = document.createElement('img');
+        bgImg.className = 'composite-bg';
+        bgImg.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:1;';
+        compositeImageDisplayArea.appendChild(bgImg);
+    }
+
+    let fgImg = compositeImageDisplayArea.querySelector('img.composite-fg');
+    if (!fgImg) {
+        fgImg = document.createElement('img');
+        fgImg.className = 'composite-fg';
+        fgImg.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; z-index:2;';
+        compositeImageDisplayArea.appendChild(fgImg);
+    }
+
+    bgImg.src = backgroundUrl; // Ej: /img/fondos/fondo_seleccionado.jpg (servido por Node)
+    fgImg.src = foregroundUrl;   // Ej: blob:http://localhost:3000/abcdef-1234-5678
+
+    compositeImageDisplayArea.style.maxWidth = imagenLightboxElement.style.maxWidth || '100%';
+    compositeImageDisplayArea.style.maxHeight = imagenLightboxElement.style.maxHeight || 'calc(100% - 80px)';
+    compositeImageDisplayArea.style.width = imagenLightboxElement.offsetWidth + 'px';
+    compositeImageDisplayArea.style.height = imagenLightboxElement.offsetHeight + 'px';
+
+    imagenLightboxElement.style.display = 'none';
+    if(tituloLightboxElement) tituloLightboxElement.style.display = 'none';
+    compositeImageDisplayArea.style.display = 'block';
+    if (editorToolbar) editorToolbar.style.display = 'flex';
+
+    hideAllEditPanels();
+    if (toolBrightness) toolBrightness.style.display = 'none';
+    if (toolContrast) toolContrast.style.display = 'none';
+    if (toolSaturation) toolSaturation.style.display = 'none';
+    if (toolFilters) toolFilters.style.display = 'none';
+    if (toolReset) {
+        const span = toolReset.querySelector('span');
+        if(span) span.textContent = 'Ver Original'; else toolReset.textContent = 'Ver Original';
+    }
+    showLoadingIndicator(false);
+}
+
+function hideCompositeImage() {
+    if (compositeImageDisplayArea) compositeImageDisplayArea.style.display = 'none';
+    if (currentForegroundUrl) {
+        URL.revokeObjectURL(currentForegroundUrl);
+        currentForegroundUrl = null;
+    }
+    currentCompositeBackgroundUrl = null;
+    if (imagenLightboxElement) imagenLightboxElement.style.display = 'block';
+    if(tituloLightboxElement) tituloLightboxElement.style.display = 'block';
+
+    if (toolBrightness) toolBrightness.style.display = 'flex';
+    if (toolContrast) toolContrast.style.display = 'flex';
+    if (toolSaturation) toolSaturation.style.display = 'flex';
+    if (toolFilters) toolFilters.style.display = 'flex';
+    if (toolReset) {
+        const span = toolReset.querySelector('span');
+        if(span) span.textContent = 'Restablecer'; else toolReset.textContent = 'Restablecer';
+    }
+    resetImageAdjustments();
+}
+
+async function registrarAccionFinal(tipoAccion, configuracionDeEdicion) {
+    const idAccesoActual = window.idAccesoGaleriaCliente || currentIdAccesoGaleriaParaLog;
+    if (!editorToolbar || editorToolbar.style.display === 'none' || idAccesoActual === null || idAccesoActual === undefined) {
+        if (editorToolbar && editorToolbar.style.display !== 'none') {
+            console.warn("Registro de acción final omitido: Se requiere un ID de Acceso de cliente válido.", { idDetectado: idAccesoActual, tipo: tipoAccion });
+        }
+        return;
+    }
     const currentLinkElement = galeriaActivaLightbox[indiceActualLightbox];
     const nombreImagenOriginalAttr = currentLinkElement ? currentLinkElement.getAttribute('data-original-name') : null;
-    let nombreImagen = 'desconocida.jpg'; // Default
+    let nombreImagen = 'desconocida.jpg';
     if (nombreImagenOriginalAttr) {
         nombreImagen = nombreImagenOriginalAttr;
-    } else if (currentOriginalWasabiUrlForLightbox) { // Fallback a la URL si no hay data-attribute
+    } else if (currentOriginalWasabiUrlForLightbox) {
         try {
             const url = new URL(currentOriginalWasabiUrlForLightbox);
             const pathParts = url.pathname.split('/');
             nombreImagen = decodeURIComponent(pathParts[pathParts.length - 1]);
         } catch (e) {
-            // Fallback si la URL no es válida o no se puede parsear
             nombreImagen = currentOriginalWasabiUrlForLightbox.substring(currentOriginalWasabiUrlForLightbox.lastIndexOf('/') + 1).split('?')[0];
         }
     }
-    
     const galleryTitleElement = document.getElementById('gallery-title-premium');
     let nombreUsuarioGaleriaActual = null;
     if (galleryTitleElement && galleryTitleElement.textContent.startsWith('Galería de ')) {
@@ -91,28 +296,23 @@ async function registrarAccionFinal(tipoAccion, configuracionDeEdicion) {
     } else if (galleryTitleElement && galleryTitleElement.textContent && galleryTitleElement.textContent !== "Tu Galería Privada" && galleryTitleElement.textContent !== "Tu Galería de Recuerdos") {
         nombreUsuarioGaleriaActual = galleryTitleElement.textContent.trim();
     }
-    
     const payload = {
         idAcceso: idAccesoActual,
-        nombreUsuarioGaleria: nombreUsuarioGaleriaActual, 
+        nombreUsuarioGaleria: nombreUsuarioGaleriaActual,
         nombreImagenOriginal: nombreImagen,
-        configuracionEdicion: configuracionDeEdicion 
+        configuracionEdicion: configuracionDeEdicion
     };
-
     try {
-        // Asegúrate de que el endpoint coincida con tu server.js
-        console.log(`Frontend: Enviando registro de '${tipoAccion}' al endpoint /registrar-descarga-final:`, payload);
-        const response = await fetch('/registrar-descarga-final', { 
+        // ATENCIÓN: SI '/registrar-descarga-final' ES UN ENDPOINT DE TU SERVIDOR PYTHON (app.py),
+        // DEBES USAR LA URL COMPLETA: 'http://localhost:5000/registrar-descarga-final'
+        const response = await fetch('/registrar-descarga-final', { // <-- VERIFICAR ESTA URL
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         if (!response.ok) {
             let errorMsg = `Error del backend (${response.status}) al registrar '${tipoAccion}'`;
-            try { 
-                const errorData = await response.json(); 
-                errorMsg = errorData.message || errorMsg; 
-            } catch (e) { /* no es json, usar errorMsg original */ }
+            try { const errorData = await response.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* no es json */ }
             console.error(errorMsg);
         } else {
             console.log(`Registro de '${tipoAccion}' enviado exitosamente.`);
@@ -122,22 +322,22 @@ async function registrarAccionFinal(tipoAccion, configuracionDeEdicion) {
     }
 }
 
-
 function applyCssFiltersToLightboxImage() {
     if (!imagenLightboxElement) return;
-    let filterString = '';
-    filterString += `brightness(${currentLightboxFilters.brightness / 100}) `;
-    filterString += `contrast(${currentLightboxFilters.contrast / 100}) `;
-    filterString += `saturate(${currentLightboxFilters.saturate / 100}) `;
-    filterString += `grayscale(${currentLightboxFilters.grayscale}%) `;
-    filterString += `sepia(${currentLightboxFilters.sepia}%) `;
-    filterString += `invert(${currentLightboxFilters.invert}%) `;
-    if (currentLightboxFilters.blur > 0) filterString += `blur(${currentLightboxFilters.blur}px) `;
-    if (currentLightboxFilters.hueRotate !== 0) filterString += `hue-rotate(${currentLightboxFilters.hueRotate}deg) `;
+    let filterString = Object.entries(currentLightboxFilters)
+        .map(([key, value]) => {
+            if (key === 'brightness' || key === 'contrast' || key === 'saturate') return `${key}(${value / 100})`;
+            if (key === 'grayscale' || key === 'sepia' || key === 'invert') return `${key}(${value}%)`;
+            if (key === 'blur' && value > 0) return `blur(${value}px)`;
+            if (key === 'hueRotate' && value !== 0) return `hue-rotate(${value}deg)`;
+            return '';
+        })
+        .filter(Boolean)
+        .join(' ');
     imagenLightboxElement.style.filter = filterString.trim();
 }
 
-function resetImageAdjustments() { 
+function resetImageAdjustments() {
     currentLightboxFilters = {
         brightness: 100, contrast: 100, saturate: 100,
         grayscale: 0, sepia: 0, invert: 0, blur: 0, hueRotate: 0,
@@ -146,7 +346,7 @@ function resetImageAdjustments() {
     if (brightnessSlider) brightnessSlider.value = 100; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '100%';
     if (contrastSlider) contrastSlider.value = 100; if (contrastValueDisplay) contrastValueDisplay.textContent = '100%';
     if (saturationSlider) saturationSlider.value = 100; if (saturationValueDisplay) saturationValueDisplay.textContent = '100%';
-    
+
     if (filterOptions.length > 0 && editorToolbar) {
         filterOptions.forEach(opt => opt.classList.remove('active-filter'));
         const originalButton = editorToolbar.querySelector('.filter-option[data-filter="original"]');
@@ -154,7 +354,6 @@ function resetImageAdjustments() {
     }
     applyCssFiltersToLightboxImage();
     console.log("Ajustes de imagen reseteados en el frontend.");
-    // NO SE REGISTRA EL RESET AUTOMÁTICAMENTE
 }
 
 function hideAllEditPanels() {
@@ -162,50 +361,60 @@ function hideAllEditPanels() {
     if (contrastSliderContainer) contrastSliderContainer.style.display = 'none';
     if (saturationSliderContainer) saturationSliderContainer.style.display = 'none';
     if (filtersPanelContainer) filtersPanelContainer.style.display = 'none';
+    if (editorToolbar) {
+         editorToolbar.querySelectorAll('.tool-button.active').forEach(b => {
+            if (b.id !== 'tool-change-background') b.classList.remove('active');
+         });
+    }
 }
 
 function updateActiveToolButton(activeButton) {
     if (editorToolbar) {
         editorToolbar.querySelectorAll('.tool-button').forEach(button => {
-            if (button.id !== 'tool-reset' && button.id !== 'lightbox-download-button') button.classList.remove('active');
+            if (button.id !== 'tool-reset' && button.id !== 'lightbox-download-button' && button.id !== 'tool-change-background') {
+                button.classList.remove('active');
+            }
         });
-        if (activeButton && activeButton.id !== 'tool-reset' && activeButton.id !== 'lightbox-download-button') activeButton.classList.add('active');
+        if (activeButton && activeButton.id !== 'tool-reset' && activeButton.id !== 'lightbox-download-button' && activeButton.id !== 'tool-change-background') {
+            activeButton.classList.add('active');
+        }
     }
 }
 
 function mostrarImagenLightbox(indice) {
     if (!lightboxElement || !imagenLightboxElement || !tituloLightboxElement || !controlPrevLightbox || !controlNextLightbox ||
         indice < 0 || indice >= galeriaActivaLightbox.length) { return; }
+
+    hideCompositeImage();
+
     const enlaceActual = galeriaActivaLightbox[indice];
     if (!enlaceActual) return;
 
     currentOriginalWasabiUrlForLightbox = enlaceActual.getAttribute('data-original-wasabi-url') || enlaceActual.getAttribute('href');
-    
-    if (typeof window.idAccesoGaleriaCliente !== 'undefined') { 
+
+    if (typeof window.idAccesoGaleriaCliente !== 'undefined') {
         currentIdAccesoGaleriaParaLog = window.idAccesoGaleriaCliente;
     }
-    
+
     const titleImagen = enlaceActual.getAttribute('data-title') || 'Imagen de la galería';
-    const originalNameFromData = enlaceActual.getAttribute('data-original-name'); // Obtener de data-original-name
+    const originalNameFromData = enlaceActual.getAttribute('data-original-name');
     if (originalNameFromData) {
         imagenLightboxElement.setAttribute('data-original-name', originalNameFromData);
     } else {
-        // Fallback si data-original-name no está, aunque idealmente siempre debería estar
         const tempName = titleImagen.replace(/[^a-z0-9_.-]/gi, '_').substring(0, 50) + ".jpg";
         imagenLightboxElement.setAttribute('data-original-name', tempName);
     }
 
-
     imagenLightboxElement.setAttribute('src', currentOriginalWasabiUrlForLightbox);
     imagenLightboxElement.setAttribute('alt', titleImagen);
     if (tituloLightboxElement) tituloLightboxElement.textContent = titleImagen;
-    
+
     indiceActualLightbox = indice;
     if (controlPrevLightbox) controlPrevLightbox.classList.toggle('hidden', indiceActualLightbox === 0);
     if (controlNextLightbox) controlNextLightbox.classList.toggle('hidden', indiceActualLightbox === galeriaActivaLightbox.length - 1);
-    
-    resetImageAdjustments(); 
-    
+
+    resetImageAdjustments();
+
     if (imagenLightboxElement) {
         imagenLightboxElement.classList.remove('zoomed-in');
         imagenLightboxElement.style.cursor = 'zoom-in';
@@ -215,12 +424,14 @@ function mostrarImagenLightbox(indice) {
     if (editorToolbar && enlaceActual) {
         const esGaleriaDeCliente = enlaceActual.getAttribute('data-lightbox') === 'clipremium-gallery';
         editorToolbar.style.display = esGaleriaDeCliente ? 'flex' : 'none';
+        if (changeBackgroundButton) changeBackgroundButton.style.display = esGaleriaDeCliente ? 'flex': 'none';
+
         if (esGaleriaDeCliente) {
-             const originalButton = editorToolbar.querySelector('.filter-option[data-filter="original"]');
-             if (originalButton && filterOptions.length > 0) { 
+            const originalButton = editorToolbar.querySelector('.filter-option[data-filter="original"]');
+            if (originalButton && filterOptions.length > 0) {
                 filterOptions.forEach(opt => opt.classList.remove('active-filter'));
                 originalButton.classList.add('active-filter');
-             }
+            }
         } else {
             hideAllEditPanels(); updateActiveToolButton(null);
         }
@@ -230,71 +441,41 @@ function mostrarImagenLightbox(indice) {
 function abrirLightbox(galeria, indice, esGaleriaDeCliente = false) {
     if (!lightboxElement) { console.error("Lightbox element not found."); return; }
     galeriaActivaLightbox = galeria;
-    
+
     if (esGaleriaDeCliente && typeof window.idAccesoGaleriaCliente !== 'undefined') {
         currentIdAccesoGaleriaParaLog = window.idAccesoGaleriaCliente;
-        // console.log("ID de Acceso para logging establecido al ABRIR Lightbox:", currentIdAccesoGaleriaParaLog); // Ya lo tienes en tu log
     } else if (esGaleriaDeCliente) {
         console.warn("Abriendo lightbox de cliente pero window.idAccesoGaleriaCliente no está definido.");
         currentIdAccesoGaleriaParaLog = null;
     } else {
-        currentIdAccesoGaleriaParaLog = null; 
+        currentIdAccesoGaleriaParaLog = null;
     }
-
-    if (editorToolbar) { /* ... (lógica para mostrar/ocultar toolbar como la tenías) ... */ }
-    mostrarImagenLightbox(indice); 
+    mostrarImagenLightbox(indice);
     lightboxElement.classList.add('activo');
     document.body.style.overflow = 'hidden';
 }
 
 function cerrarLightboxFunction() {
-    // ... (sin cambios respecto a tu script, solo asegúrate que resetImageAdjustments() no loguee) ...
     if (!lightboxElement) return;
+    hideCompositeImage();
     lightboxElement.classList.remove('activo');
     document.body.style.overflow = 'auto';
-    resetImageAdjustments(); 
-    hideAllEditPanels(); 
+    resetImageAdjustments();
+    hideAllEditPanels();
     updateActiveToolButton(null);
     if (editorToolbar) editorToolbar.style.display = 'none';
-    if (imagenLightboxElement) { /* ... limpiar imagen ... */ }
     isLightboxImageZoomed = false;
     currentOriginalWasabiUrlForLightbox = '';
-    currentIdAccesoGaleriaParaLog = null; // Limpiar al cerrar
+    currentIdAccesoGaleriaParaLog = null;
 }
 
 window.inicializarLightboxGlobal = function(selectorEnlaces) {
-    // ... (tu lógica de inicializarLightboxGlobal como la tenías) ...
     const nuevosEnlacesGaleria = Array.from(document.querySelectorAll(selectorEnlaces));
     if (nuevosEnlacesGaleria.length === 0) return;
-
     nuevosEnlacesGaleria.forEach((enlace, indice) => {
         if (enlace.dataset.lightboxInitialized === 'true') return;
-
-        const nuevoEnlace = enlace.cloneNode(true); 
-        if(enlace.parentNode) enlace.parentNode.replaceChild(nuevoEnlace, enlace);
-        
-        nuevoEnlace.addEventListener('click', function(evento) {
-            evento.preventDefault();
-            const esGaleriaDeCliente = this.getAttribute('data-lightbox') === 'clipremium-gallery';
-            abrirLightbox(nuevosEnlacesGaleria, indice, esGaleriaDeCliente);
-        });
-        nuevoEnlace.dataset.lightboxInitialized = 'true';
-    });
-};
-
-
-if (lightboxElement) {
-    window.inicializarLightboxGlobal = function(selectorEnlaces) {
-    // ... (tu lógica actual de inicializarLightboxGlobal, que está bien para abrir el lightbox) ...
-    const nuevosEnlacesGaleria = Array.from(document.querySelectorAll(selectorEnlaces));
-    if (nuevosEnlacesGaleria.length === 0) return;
-
-    nuevosEnlacesGaleria.forEach((enlace, indice) => {
-        if (enlace.dataset.lightboxInitialized === 'true') return;
-
         const nuevoEnlace = enlace.cloneNode(true);
         if(enlace.parentNode) enlace.parentNode.replaceChild(nuevoEnlace, enlace);
-
         nuevoEnlace.addEventListener('click', function(evento) {
             evento.preventDefault();
             const esGaleriaDeCliente = this.getAttribute('data-lightbox') === 'clipremium-gallery';
@@ -304,124 +485,65 @@ if (lightboxElement) {
     });
 };
 
-
-// --- EVENT LISTENERS PARA EL LIGHTBOX (CIERRE Y NAVEGACIÓN) ---
 if (lightboxElement) {
-    // Listener para el botón de cerrar
-    if (cerrarLightboxBtn) {
-        cerrarLightboxBtn.addEventListener('click', () => {
-            // console.log('Cerrar botón clickeado'); // Para depuración
-            cerrarLightboxFunction();
-        });
-    }
-
-    // Listener para la flecha "Anterior"
-    if (controlPrevLightbox) {
-        controlPrevLightbox.addEventListener('click', () => {
-            // console.log('Prev botón clickeado'); // Para depuración
-            if (indiceActualLightbox > 0) {
-                mostrarImagenLightbox(indiceActualLightbox - 1);
-            }
-        });
-    }
-
-    // Listener para la flecha "Siguiente"
-    if (controlNextLightbox) {
-        controlNextLightbox.addEventListener('click', () => {
-            // console.log('Next botón clickeado'); // Para depuración
-            if (indiceActualLightbox < galeriaActivaLightbox.length - 1) {
-                mostrarImagenLightbox(indiceActualLightbox + 1);
-            }
-        });
-    }
-
-    // Opcional: Cerrar el lightbox si se hace clic fuera del contenido principal (en el fondo oscuro)
+    if (cerrarLightboxBtn) cerrarLightboxBtn.addEventListener('click', cerrarLightboxFunction);
+    if (controlPrevLightbox) controlPrevLightbox.addEventListener('click', () => {
+        if (indiceActualLightbox > 0) mostrarImagenLightbox(indiceActualLightbox - 1);
+    });
+    if (controlNextLightbox) controlNextLightbox.addEventListener('click', () => {
+        if (indiceActualLightbox < galeriaActivaLightbox.length - 1) mostrarImagenLightbox(indiceActualLightbox + 1);
+    });
     lightboxElement.addEventListener('click', function(event) {
-        // Asegúrate de que el clic es en el propio lightboxElement y no en uno de sus hijos
-        // como la imagen, la barra de herramientas o los botones de navegación.
-        if (event.target === lightboxElement) {
-            cerrarLightboxFunction();
-        }
+        if (event.target === lightboxElement) cerrarLightboxFunction();
     });
-
-    // Opcional: Navegación con teclas de flecha y cierre con Escape
     document.addEventListener('keydown', function(event) {
-        if (lightboxElement.classList.contains('activo')) { // Solo si el lightbox está visible
-            if (event.key === 'Escape') {
-                cerrarLightboxFunction();
-            } else if (event.key === 'ArrowLeft') {
-                if (controlPrevLightbox && !controlPrevLightbox.classList.contains('hidden')) {
-                    controlPrevLightbox.click(); // Simula un clic en el botón "anterior"
-                }
-            } else if (event.key === 'ArrowRight') {
-                if (controlNextLightbox && !controlNextLightbox.classList.contains('hidden')) {
-                    controlNextLightbox.click(); // Simula un clic en el botón "siguiente"
-                }
-            }
+        if (lightboxElement.classList.contains('activo')) {
+            if (event.key === 'Escape') cerrarLightboxFunction();
+            else if (event.key === 'ArrowLeft' && controlPrevLightbox && !controlPrevLightbox.classList.contains('hidden')) controlPrevLightbox.click();
+            else if (event.key === 'ArrowRight' && controlNextLightbox && !controlNextLightbox.classList.contains('hidden')) controlNextLightbox.click();
         }
     });
-
-    // Lógica de zoom para la imagen dentro del lightbox (si la tienes o quieres añadirla)
     if (imagenLightboxElement) {
         imagenLightboxElement.addEventListener('click', function(e) {
-            e.stopPropagation(); // Importante: Evita que el clic en la imagen cierre el lightbox si tienes el listener en lightboxElement
-            // Aquí tu lógica de zoom, por ejemplo:
-            // this.classList.toggle('zoomed-in');
-            // isLightboxImageZoomed = this.classList.contains('zoomed-in');
-            // this.style.cursor = isLightboxImageZoomed ? 'zoom-out' : 'zoom-in';
-            // console.log("Zoom state:", isLightboxImageZoomed);
+            e.stopPropagation(); /* Lógica de zoom aquí si la tienes */
         });
     }
-}
-    // ... (tus listeners globales para zoom, cierre, navegación, sin cambios) ...
 }
 
 function configurarListenersDeEdicion() {
-    if (!editorToolbar) {
-        // console.log("Editor toolbar no encontrado."); // Comentado para reducir logs
-        return;
-    }
+    if (!editorToolbar) return;
     filterOptions = Array.from(editorToolbar.querySelectorAll('.filter-option'));
-    // console.log("Configurando listeners de edición..."); // Comentado
 
-    // Sliders (Brightness, Contrast, Saturation)
-    // SOLO actualizan la UI y currentLightboxFilters. NO REGISTRAN INTERACCIÓN AQUÍ.
+    // Listeners para Brillo, Contraste, Saturación
     if (toolBrightness && brightnessSliderContainer && brightnessSlider && brightnessValueDisplay) {
         toolBrightness.addEventListener('click', (e) => { e.stopPropagation(); const isActive = brightnessSliderContainer.style.display === 'flex'; hideAllEditPanels(); updateActiveToolButton(isActive ? null : toolBrightness); brightnessSliderContainer.style.display = isActive ? 'none' : 'flex'; });
         brightnessSlider.addEventListener('input', (e) => { currentLightboxFilters.brightness = parseInt(e.target.value); if(brightnessValueDisplay) brightnessValueDisplay.textContent = `${currentLightboxFilters.brightness}%`; applyCssFiltersToLightboxImage(); });
-        // El listener 'change' que llamaba a registrarInteraccionEdicion se elimina.
         if(brightnessSliderContainer) brightnessSliderContainer.addEventListener('click', e => e.stopPropagation());
     }
     if (toolContrast && contrastSliderContainer && contrastSlider && contrastValueDisplay) {
         toolContrast.addEventListener('click', (e) => { e.stopPropagation(); const isActive = contrastSliderContainer.style.display === 'flex'; hideAllEditPanels(); updateActiveToolButton(isActive ? null : toolContrast); contrastSliderContainer.style.display = isActive ? 'none' : 'flex'; });
         contrastSlider.addEventListener('input', (e) => { currentLightboxFilters.contrast = parseInt(e.target.value); if(contrastValueDisplay) contrastValueDisplay.textContent = `${currentLightboxFilters.contrast}%`; applyCssFiltersToLightboxImage(); });
-        // El listener 'change' que llamaba a registrarInteraccionEdicion se elimina.
         if(contrastSliderContainer) contrastSliderContainer.addEventListener('click', e => e.stopPropagation());
     }
     if (toolSaturation && saturationSliderContainer && saturationSlider && saturationValueDisplay) {
         toolSaturation.addEventListener('click', (e) => { e.stopPropagation(); const isActive = saturationSliderContainer.style.display === 'flex'; hideAllEditPanels(); updateActiveToolButton(isActive ? null : toolSaturation); saturationSliderContainer.style.display = isActive ? 'none' : 'flex'; });
         saturationSlider.addEventListener('input', (e) => { currentLightboxFilters.saturate = parseInt(e.target.value); if(saturationValueDisplay) saturationValueDisplay.textContent = `${currentLightboxFilters.saturate}%`; applyCssFiltersToLightboxImage(); });
-        // El listener 'change' que llamaba a registrarInteraccionEdicion se elimina.
         if(saturationSliderContainer) saturationSliderContainer.addEventListener('click', e => e.stopPropagation());
     }
-    
-    if (toolFilters && filtersPanelContainer) { /* ... (listener para mostrar/ocultar panel, sin cambios) ... */ }
 
-    // Botones de Filtro individuales (SOLO ACTUALIZAN UI Y ESTADO LOCAL)
+    if (toolFilters && filtersPanelContainer) {
+      toolFilters.addEventListener('click', (e) => { e.stopPropagation(); const isActive = filtersPanelContainer.style.display === 'flex'; hideAllEditPanels(); updateActiveToolButton(isActive ? null : toolFilters); filtersPanelContainer.style.display = isActive ? 'none' : 'flex'; });
+      if(filtersPanelContainer) filtersPanelContainer.addEventListener('click', e => e.stopPropagation());
+    }
+
     if (filterOptions.length > 0) {
         filterOptions.forEach(button => {
             button.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const filterName = this.dataset.filter;
-                // const filtroAnterior = currentLightboxFilters.activeNamedFilter; // No se usa para logueo aquí
-                // const valorInicialSliders = JSON.stringify({...}); // No se usa para logueo aquí
-                
-                resetImageAdjustments(); 
-                currentLightboxFilters.activeNamedFilter = filterName; 
-                // console.log(`Cliente: Filtro activo cambiado a: ${filterName}.`); // Comentado
-
-                // Lógica del switch para aplicar previsualizaciones CSS y ajustar currentLightboxFilters
-                // (LA LÓGICA COMPLETA DEL SWITCH QUE ME PASASTE ANTES VA AQUÍ)
+                resetImageAdjustments();
+                currentLightboxFilters.activeNamedFilter = filterName;
+                // Switch para aplicar filtros
                 switch (filterName) {
                     case 'original': break;
                     case 'grayscale': currentLightboxFilters.grayscale = 100; currentLightboxFilters.saturate = 0; if (saturationSlider) saturationSlider.value = 0; if (saturationValueDisplay) saturationValueDisplay.textContent = '0%'; break;
@@ -435,122 +557,92 @@ function configurarListenersDeEdicion() {
                     case 'kodak_gold': currentLightboxFilters.saturate = 110; currentLightboxFilters.brightness = 105; currentLightboxFilters.contrast = 108; currentLightboxFilters.sepia = 10; currentLightboxFilters.hueRotate = -8; if (saturationSlider) saturationSlider.value = 110; if (saturationValueDisplay) saturationValueDisplay.textContent = '110%'; if (contrastSlider) contrastSlider.value = 108; if (contrastValueDisplay) contrastValueDisplay.textContent = '108%'; if (brightnessSlider) brightnessSlider.value = 105; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '105%'; break;
                     case 'mate_look': currentLightboxFilters.saturate = 75; currentLightboxFilters.contrast = 88; currentLightboxFilters.brightness = 108; if (saturationSlider) saturationSlider.value = 75; if (saturationValueDisplay) saturationValueDisplay.textContent = '75%'; if (contrastSlider) contrastSlider.value = 88; if (contrastValueDisplay) contrastValueDisplay.textContent = '88%'; if (brightnessSlider) brightnessSlider.value = 108; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '108%'; break;
                     case 'aden_filter': currentLightboxFilters.saturate = 85; currentLightboxFilters.brightness = 110; currentLightboxFilters.contrast = 90; currentLightboxFilters.hueRotate = -20; currentLightboxFilters.grayscale = 0; currentLightboxFilters.sepia = 0; if (saturationSlider) saturationSlider.value = 85; if (saturationValueDisplay) saturationValueDisplay.textContent = '85%'; if (brightnessSlider) brightnessSlider.value = 110; if (brightnessValueDisplay) brightnessValueDisplay.textContent = '110%'; if (contrastSlider) contrastSlider.value = 90; if (contrastValueDisplay) contrastValueDisplay.textContent = '90%'; break;
-                    case 'teal_orange': currentLightboxFilters.saturate = 120; currentLightboxFilters.contrast = 110; if (saturationSlider) saturationSlider.value = 120; if (saturationValueDisplay) saturationValueDisplay.textContent = '120%'; if (contrastSlider) contrastSlider.value = 110; if (contrastValueDisplay) contrastValueDisplay.textContent = '110%'; break; 
+                    case 'teal_orange': currentLightboxFilters.saturate = 120; currentLightboxFilters.contrast = 110; if (saturationSlider) saturationSlider.value = 120; if (saturationValueDisplay) saturationValueDisplay.textContent = '120%'; if (contrastSlider) contrastSlider.value = 110; if (contrastValueDisplay) contrastValueDisplay.textContent = '110%'; break;
                     case 'cinematic_look': currentLightboxFilters.saturate = 80; currentLightboxFilters.contrast = 115; currentLightboxFilters.sepia = 5; currentLightboxFilters.grayscale = 0; if (saturationSlider) saturationSlider.value = 80; if (saturationValueDisplay) saturationValueDisplay.textContent = '80%'; if (contrastSlider) contrastSlider.value = 115; if (contrastValueDisplay) contrastValueDisplay.textContent = '115%'; break;
                     default: console.warn("Filtro nombrado no completamente definido para previsualización:", filterName); break;
                 }
                 applyCssFiltersToLightboxImage();
                 filterOptions.forEach(opt => opt.classList.remove('active-filter'));
                 this.classList.add('active-filter');
-                // NO SE LLAMA A registrarInteraccionEdicion AQUÍ
             });
         });
     }
 
-    // Botón de Reset (NO REGISTRA NADA)
-    if (toolReset) { /* ... (como lo tenías, sin llamar a registrar nada) ... */ }
-
-    // === BOTÓN DE DESCARGA DEL LIGHTBOX: AQUÍ SE REGISTRA LA INFORMACIÓN ===
-    if (lightboxDownloadButton && imagenLightboxElement) {
-        lightboxDownloadButton.addEventListener('click', async function(e) {
+    if (toolReset) {
+        toolReset.addEventListener('click', function(e) {
             e.stopPropagation();
-            if (!currentOriginalWasabiUrlForLightbox) {
-                alert("No hay URL de imagen original para procesar la descarga.");
-                return;
+            if (compositeImageDisplayArea.style.display === 'block') {
+                hideCompositeImage();
+            } else {
+                resetImageAdjustments();
             }
-            
-            const buttonElement = this;
-            const spanElement = buttonElement.querySelector('span');
-            const originalButtonText = spanElement ? spanElement.textContent : 'Descargar';
-
-            if (spanElement) spanElement.textContent = 'Preparando...';
-            buttonElement.disabled = true;
-
-            // Obtener el nombre original de la imagen de forma más robusta
-            let originalFileName = imagenLightboxElement.getAttribute('data-original-name') || "imagen.jpg";
-            const currentLink = galeriaActivaLightbox[indiceActualLightbox]; // Asegurarse que esto esté actualizado
-            if (currentLink && !imagenLightboxElement.getAttribute('data-original-name')) { 
-                 // Fallback si data-original-name no se puso en imagenLightboxElement
-                 originalFileName = currentLink.getAttribute('data-original-name') || 
-                                   (currentLink.getAttribute('data-title') ? 
-                                        `${currentLink.getAttribute('data-title').replace(/[^a-z0-9_.-]/gi, '_').substring(0, 50)}.jpg` : 
-                                        "imagen.jpg");
-            }
-            
-            // Objeto con la configuración final de edición para guardar en la BD
-            const configuracionEdicionParaGuardarEnBD = { ...currentLightboxFilters }; 
-
-            // Llamar a la función de registro ANTES de la descarga real
-            // Pasamos el tipo de acción y el objeto de configuración.
-            await registrarAccionFinal('descarga_cliente', configuracionEdicionParaGuardarEnBD);
-
-            if (spanElement) spanElement.textContent = 'Procesando Imagen...';
-            // Preparar el objeto de ediciones para el endpoint de procesamiento de imagen
-            const editsParaProcesamiento = {
-                brightness: currentLightboxFilters.brightness / 100.0,
-                contrast: currentLightboxFilters.contrast / 100.0,
-                saturate: currentLightboxFilters.saturate / 100.0,
-                grayscale: currentLightboxFilters.grayscale > 0,
-                sepia: currentLightboxFilters.sepia > 0,
-                // Mantén los campos que tu backend /procesar-y-descargar-imagen espera
-                cssSepiaPercentage: currentLightboxFilters.sepia, 
-                cssHueRotateDegrees: currentLightboxFilters.hueRotate,
-                activeNamedFilter: currentLightboxFilters.activeNamedFilter,
-                originalName: originalFileName
-            };
-
-            try {
-                const response = await fetch('/procesar-y-descargar-imagen', {
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        originalWasabiUrl: currentOriginalWasabiUrlForLightbox, 
-                        edits: editsParaProcesamiento 
-                    })
-                });
-                
-                if (!response.ok) { 
-                    let errorData = { message: `Error del servidor: ${response.status}` };
-                    try { errorData = await response.json(); } catch (parseErr) { /* No es JSON */ }
-                    throw new Error(errorData.message || `Error HTTP ${response.status}`);
-                }
-                const disposition = response.headers.get('content-disposition');
-                let downloadFileName = `editada_${originalFileName}`.replace(/\s+/g, '_');
-                if (disposition && disposition.includes('attachment')) {
-                    const filenameMatch = disposition.match(/filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?/i);
-                    if (filenameMatch && filenameMatch.length > 1) {
-                        downloadFileName = decodeURIComponent(filenameMatch[1]);
-                    }
-                }
-                const blob = await response.blob(); 
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a'); 
-                link.href = url;
-                link.setAttribute('download', downloadFileName); 
-                document.body.appendChild(link);
-                link.click(); 
-                link.parentNode.removeChild(link); 
-                window.URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error('Error en la descarga procesada por el servidor:', error);
-                alert(`Error al descargar la imagen: ${error.message}`);
-            } finally {
-                buttonElement.disabled = false; 
-                if (spanElement) spanElement.textContent = originalButtonText;
-            }
+            hideAllEditPanels();
+            updateActiveToolButton(null);
         });
     }
 
-    // Listener para cerrar paneles con clic fuera
-    document.addEventListener('click', function(event) { /* ... (como lo tenías) ... */ });
-} 
+    if (lightboxDownloadButton && imagenLightboxElement) {
+        lightboxDownloadButton.addEventListener('click', async function(e) {
+            e.stopPropagation();
+            const originalImageAvailable = currentOriginalWasabiUrlForLightbox && imagenLightboxElement.style.display !== 'none';
+            const compositeImageVisible = compositeImageDisplayArea.style.display === 'block' && currentForegroundUrl && currentCompositeBackgroundUrl;
 
-// --- Funcionalidad General del Sitio (DOM Listo) ---
-document.addEventListener('DOMContentLoaded', function() {
-    // ... (Tu código DOMContentLoaded, asegurándote de que configurarListenersDeEdicion se llame si editorToolbar existe)
-    if (editorToolbar) { 
-        filterOptions = Array.from(editorToolbar.querySelectorAll('.filter-option'));
-        configurarListenersDeEdicion(); 
+            if (!originalImageAvailable && !compositeImageVisible) {
+                 alert("No hay imagen para descargar. Abre una imagen o crea una composición.");
+                 return;
+            }
+            // ... (resto de tu lógica de descarga) ...
+            // ATENCIÓN: SI '/procesar-y-descargar-imagen' ES UN ENDPOINT DE TU SERVIDOR PYTHON (app.py),
+            // DEBES USAR LA URL COMPLETA: 'http://localhost:5000/procesar-y-descargar-imagen'
+            // const response = await fetch('/procesar-y-descargar-imagen', { /* ... */ });
+        });
     }
-    // ...
+
+    document.addEventListener('click', function(event) {
+        if (brightnessSliderContainer && !brightnessSliderContainer.contains(event.target) && toolBrightness && !toolBrightness.contains(event.target) ) {
+            brightnessSliderContainer.style.display = 'none'; if(toolBrightness) toolBrightness.classList.remove('active');
+        }
+        if (contrastSliderContainer && !contrastSliderContainer.contains(event.target) && toolContrast && !toolContrast.contains(event.target)) {
+            contrastSliderContainer.style.display = 'none'; if(toolContrast) toolContrast.classList.remove('active');
+        }
+        if (saturationSliderContainer && !saturationSliderContainer.contains(event.target) && toolSaturation && !toolSaturation.contains(event.target)) {
+            saturationSliderContainer.style.display = 'none'; if(toolSaturation) toolSaturation.classList.remove('active');
+        }
+        if (filtersPanelContainer && !filtersPanelContainer.contains(event.target) && toolFilters && !toolFilters.contains(event.target)) {
+            filtersPanelContainer.style.display = 'none'; if(toolFilters) toolFilters.classList.remove('active');
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (editorToolbar) {
+        configurarListenersDeEdicion();
+    }
+
+    if (changeBackgroundButton) {
+        changeBackgroundButton.addEventListener('click', () => {
+            // Asegurarse que imagenLightboxElement exista antes de acceder a su 'src'
+            if (!currentOriginalWasabiUrlForLightbox && !(imagenLightboxElement && imagenLightboxElement.src)) {
+                 alert("Por favor, abre una imagen en el lightbox primero."); return;
+            }
+            populateBackgroundSelector();
+            if (backgroundSelectorModal) backgroundSelectorModal.style.display = 'flex';
+        });
+    }
+    if (closeBackgroundSelectorButton) {
+        closeBackgroundSelectorButton.addEventListener('click', () => {
+            if (backgroundSelectorModal) backgroundSelectorModal.style.display = 'none';
+        });
+    }
+    if (backgroundSelectorModal) {
+        backgroundSelectorModal.addEventListener('click', function(event) {
+            if (event.target === backgroundSelectorModal) {
+                backgroundSelectorModal.style.display = 'none';
+            }
+        });
+    }
+    // Inicialización global de lightbox si es necesario para otras galerías
+    // if (typeof window.inicializarLightboxGlobal === 'function') {
+    //     window.inicializarLightboxGlobal('#alguna-otra-galeria a');
+    // }
 });

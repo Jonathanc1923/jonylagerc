@@ -1,0 +1,6 @@
+Flask
+Flask-CORS
+rembg
+Pillow
+requests
+gunicorn 

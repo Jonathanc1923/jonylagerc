@@ -16,6 +16,135 @@
     --header-height-mobile: 70px;
     --separacion: 5rem;
 }
+/* Estilos para el nuevo botón y el modal de selección de fondo */
+
+/* Botón más grande "Probar Fondo" */
+#editor-toolbar .tool-button#tool-change-background {
+    padding: 8px 12px; /* Ajusta según necesites */
+    min-width: auto;
+    flex-direction: row; /* Icono y texto en fila */
+    gap: 8px; /* Espacio entre icono y texto */
+    background-color: var(--color-acento); /* Fondo destacado */
+    color: var(--color-primario); /* Texto oscuro sobre fondo acento */
+    border: 1px solid var(--color-acento-hover);
+}
+#editor-toolbar .tool-button#tool-change-background svg {
+    width: 20px;
+    height: 20px;
+    margin-bottom: 0; /* Quitar margen si está en fila */
+    fill: var(--color-primario); /* Icono oscuro */
+}
+#editor-toolbar .tool-button#tool-change-background span {
+    display: inline !important; /* Asegurar que el texto se muestre */
+    font-size: 1.3rem; /* Tamaño de texto del botón */
+    font-weight: bold;
+}
+#editor-toolbar .tool-button#tool-change-background:hover {
+    background-color: var(--color-acento-hover);
+}
+
+
+/* Modal de Selección de Fondos */
+.background-selector-modal {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1010; /* Encima del lightbox */
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+.background-selector-content {
+    background-color: var(--color-secundario);
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+    width: 90%;
+    max-width: 800px; /* Ancho máximo del modal */
+    max-height: 90vh; /* Alto máximo del modal */
+    display: flex;
+    flex-direction: column;
+}
+.background-selector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--color-texto-secundario);
+    padding-bottom: 15px;
+}
+.background-selector-header h3 {
+    margin: 0;
+    color: var(--color-acento);
+    font-size: 2rem;
+}
+.close-background-selector {
+    font-size: 2.8rem;
+    color: var(--color-texto-secundario);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.close-background-selector:hover {
+    color: var(--color-texto-principal);
+}
+
+.background-list-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Columnas responsivas */
+    gap: 15px;
+    overflow-y: auto; /* Scroll si hay muchos fondos */
+    max-height: calc(90vh - 150px); /* Ajustar altura para scroll */
+    padding: 5px;
+}
+.background-item {
+    border: 2px solid transparent;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+    aspect-ratio: 16/9; /* O la relación de aspecto que prefieras para las miniaturas */
+}
+.background-item:hover {
+    border-color: var(--color-acento);
+    transform: scale(1.05);
+}
+.background-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Para que la miniatura llene el espacio */
+    display: block;
+}
+
+/* Estilos para el contenedor de la imagen compuesta (dentro del lightbox-content) */
+#composite-image-display-area {
+    position: relative; /* Contenedor para las capas */
+    width: 100%;
+    height: 100%;
+    max-width: inherit; /* Heredar de imagen-lightbox */
+    max-height: inherit; /* Heredar de imagen-lightbox */
+    margin: auto;
+    display: none; /* Oculto hasta que se use */
+}
+#composite-image-display-area img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+#composite-image-display-area img.composite-bg {
+    object-fit: cover; /* El fondo cubre el área */
+    z-index: 1;
+}
+#composite-image-display-area img.composite-fg {
+    object-fit: contain; /* El primer plano se ajusta sin recortar */
+    z-index: 2;
+}
 
 /* Reseteo básico y estilos generales */
 html {
