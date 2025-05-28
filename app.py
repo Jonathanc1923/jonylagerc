@@ -9,12 +9,15 @@ import io
 import traceback
 import os
 import requests
+from flask_cors import CORS
 
 # -----------------------------------------------------------------------------
 # 1. CONFIGURACIÓN DE LA APLICACIÓN FLASK
 # -----------------------------------------------------------------------------
 app = Flask(__name__, static_folder='public')
 CORS(app)
+frontend_production_url = "https://www.jonylager.com"
+frontend_local_url = "http://localhost:3000" 
 
 print(f"INFO: Carpeta estática de Flask configurada en: {os.path.abspath(app.static_folder)}")
 
@@ -197,6 +200,14 @@ def remove_background_api():
         traceback.print_exc()
         return jsonify({"error": "Ocurrió un error al procesar la imagen. Revisa la consola del servidor."}), 500
 
+CORS(app, origins=[frontend_production_url, frontend_local_url], supports_credentials=True)
+# Si solo quieres permitir tu dominio de producción por ahora:
+# CORS(app, origins=[frontend_production_url], supports_credentials=True)
+# O para permitir todos durante la depuración (menos seguro):
+# CORS(app) # Esto debería haber funcionado, pero especificar es mejor.
+
+print(f"INFO: Carpeta estática de Flask configurada en: {os.path.abspath(app.static_folder)}")
+print(f"INFO: CORS configurado para permitir orígenes: {frontend_production_url}, {frontend_local_url}")
 
 if __name__ == '__main__':
     print("INFO: Iniciando servidor Flask en Python...")
@@ -212,4 +223,4 @@ if __name__ == '__main__':
     # Para producción en Render, es mejor usar un servidor WSGI como Gunicorn.
     # Si usas Gunicorn, este bloque app.run() no se ejecutará en Render.
     # Gunicorn se configurará en el comando de inicio de Render.
-    app.run(host='0.0.0.0', port=port, debug=False) # debug=False para producción
+    app.run(host='0.0.0.0', port=port, debug=True)
