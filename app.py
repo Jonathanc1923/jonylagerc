@@ -38,7 +38,7 @@ print(f"INFO: Carpeta estática de Flask configurada en: {os.path.abspath(app.st
 # Para versiones más antiguas, puedes consultar la documentación de rembg o su repositorio.
 #
 # MODELO_ACTUAL = "isnet-general-use"
-MODELO_ACTUAL = "u2net" # Prueba con u2net como alternativa, o alguno de la lista.
+MODELO_ACTUAL = "u2netp" # Prueba con u2net como alternativa, o alguno de la lista.
 # MODELO_ACTUAL = "u2net_human_seg" # Si tus imágenes son principalmente de personas.
 # from rembg import get_model_names # Esto requeriría una versión más nueva de rembg
 # print(f"Modelos disponibles en rembg: {get_model_names()}")
@@ -60,7 +60,7 @@ PRE_REDIMENSIONAR_IMAGEN = True
 # Si los bordes son muy finos (pelo, etc.), un tamaño mayor podría ayudar, pero aumentará el tiempo.
 MAX_DIMENSION_PRE_REDIMENSIONADO = 1824 # Tu valor original, puedes probar 1024, 1500, etc.
 
-USAR_ALPHA_MATTING = True # Generalmente recomendado para bordes más suaves.
+USAR_ALPHA_MATTING = False # Generalmente recomendado para bordes más suaves.
 
 # ALPHA_MATTING_SETTINGS: Ajustes para el refinamiento de bordes.
 #   - alpha_matting_foreground_threshold (0-255, default rembg: 240):
