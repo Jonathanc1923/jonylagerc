@@ -66,6 +66,15 @@ let currentLightboxFilters = {
     activeNamedFilter: 'original'
 };
 
+// --- URL BASE PARA LA API DE PYTHON ---
+// Detecta si el frontend está corriendo en Render. AJUSTA 'jonylagerpy.onrender.com' Y 'tu-frontend.onrender.com' con tus URLs reales.
+const IS_FRONTEND_DEPLOYED = window.location.hostname.endsWith('onrender.com'); // O una forma más específica si tu frontend tiene otro dominio en Render
+const PYTHON_API_BASE_URL = IS_FRONTEND_DEPLOYED ? 'https://jonylagerpy.onrender.com' : 'http://localhost:5000';
+// Si quieres que tu frontend local SIEMPRE use el backend desplegado, puedes poner:
+// const PYTHON_API_BASE_URL = 'https://jonylagerpy.onrender.com';
+
+console.log("Usando PYTHON_API_BASE_URL:", PYTHON_API_BASE_URL);
+
 
 function showLoadingIndicator(show, message = "Procesando...") {
     if (backgroundLoadingIndicator) {
@@ -86,13 +95,12 @@ async function populateBackgroundSelector() {
     showLoadingIndicator(true, "Cargando lista de fondos...");
     try {
         // =========================================================================================
-        // ATENCIÓN: SI TU LOG DE ERRORES ANTERIOR INDICÓ "ReferenceError: formData is not defined"
-        // EN LA LÍNEA 84 (APROXIMADAMENTE) DE ESTA FUNCIÓN 'populateBackgroundSelector' EN TU ARCHIVO,
-        // POR FAVOR, REVISA TU ARCHIVO LOCAL EN ESA LÍNEA.
-        // ESTA FUNCIÓN NO DEBERÍA USAR 'formData'. SI LO HACE, ESA ES LA CAUSA DEL ERROR.
+        // ATENCIÓN: Si tu log de errores anterior indicaba "ReferenceError: formData is not defined"
+        // en la línea 84 (aproximadamente) de esta función, revisa tu archivo local.
+        // Esta función NO debería usar 'formData'.
         // =========================================================================================
 
-        const response = await fetch('http://localhost:5000/list-backgrounds');
+        const response = await fetch(`${PYTHON_API_BASE_URL}/list-backgrounds`); // URL actualizada
 
         if (!response.ok) {
             console.error("Respuesta no OK del servidor al listar fondos:", response.status, response.statusText);
@@ -110,12 +118,13 @@ async function populateBackgroundSelector() {
         backgroundListContainer.innerHTML = '';
         if (!backgroundPaths || backgroundPaths.length === 0) {
             backgroundListContainer.innerHTML = '<p>No hay fondos disponibles o la respuesta está vacía.</p>';
-            return; // showLoadingIndicator(false) se llama en finally
+            return;
         }
 
         backgroundPaths.forEach(bgPath => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'background-item';
+            // Asumiendo que Node.js sirve 'public' como raíz, y bgPath es 'img/fondos/archivo.jpg'
             itemDiv.innerHTML = `<img src="/${bgPath}" alt="Fondo miniatura" data-bg-src="/${bgPath}">`;
             itemDiv.addEventListener('click', () => {
                 handleBackgroundSelection(`/${bgPath}`);
@@ -149,11 +158,9 @@ async function handleBackgroundSelection(selectedBgPath) { // selectedBgPath es 
     }
 
     if (backgroundSelectorModal) backgroundSelectorModal.style.display = 'none';
-    showLoadingIndicator(true, "Procesando imagen..."); // Cambiado mensaje
+    showLoadingIndicator(true, "Procesando imagen...");
 
     try {
-        // NO hay fetch directo a originalImageWasabiUrl.
-        // Se envía la URL al backend.
         const formData = new FormData();
         formData.append('imageUrl', originalImageWasabiUrl);
         let originalFileName = imagenLightboxElement.getAttribute('data-original-name') || "imagen_cloud.png";
@@ -161,7 +168,7 @@ async function handleBackgroundSelection(selectedBgPath) { // selectedBgPath es 
 
         console.log("JS DEBUG: Preparando para enviar a /remove-background. URL de Wasabi:", originalImageWasabiUrl);
 
-        const removeBgResponse = await fetch('http://localhost:5000/remove-background', {
+        const removeBgResponse = await fetch(`${PYTHON_API_BASE_URL}/remove-background`, { // URL actualizada
             method: 'POST',
             body: formData
         });
@@ -182,9 +189,8 @@ async function handleBackgroundSelection(selectedBgPath) { // selectedBgPath es 
         const foregroundBlob = await removeBgResponse.blob();
         if (currentForegroundUrl) URL.revokeObjectURL(currentForegroundUrl);
         currentForegroundUrl = URL.createObjectURL(foregroundBlob);
-        currentCompositeBackgroundUrl = selectedBgPath; // Esta es la ruta local del fondo seleccionado
+        currentCompositeBackgroundUrl = selectedBgPath;
 
-        // showLoadingIndicator(true, "Aplicando nuevo fondo..."); // displayCompositeImage se encarga de ocultar el loader
         displayCompositeImage(currentForegroundUrl, selectedBgPath);
 
     } catch (error) {
@@ -221,8 +227,8 @@ function displayCompositeImage(foregroundUrl, backgroundUrl) {
         compositeImageDisplayArea.appendChild(fgImg);
     }
 
-    bgImg.src = backgroundUrl; // Ej: /img/fondos/fondo_seleccionado.jpg (servido por Node)
-    fgImg.src = foregroundUrl;   // Ej: blob:http://localhost:3000/abcdef-1234-5678
+    bgImg.src = backgroundUrl;
+    fgImg.src = foregroundUrl;
 
     compositeImageDisplayArea.style.maxWidth = imagenLightboxElement.style.maxWidth || '100%';
     compositeImageDisplayArea.style.maxHeight = imagenLightboxElement.style.maxHeight || 'calc(100% - 80px)';
@@ -304,8 +310,8 @@ async function registrarAccionFinal(tipoAccion, configuracionDeEdicion) {
     };
     try {
         // ATENCIÓN: SI '/registrar-descarga-final' ES UN ENDPOINT DE TU SERVIDOR PYTHON (app.py),
-        // DEBES USAR LA URL COMPLETA: 'http://localhost:5000/registrar-descarga-final'
-        const response = await fetch('/registrar-descarga-final', { // <-- VERIFICAR ESTA URL
+        // DEBES USAR LA URL COMPLETA: `${PYTHON_API_BASE_URL}/registrar-descarga-final`
+        const response = await fetch(`${PYTHON_API_BASE_URL}/registrar-descarga-final`, { // <-- VERIFICAR Y AJUSTAR SI ES DE PYTHON
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -593,8 +599,8 @@ function configurarListenersDeEdicion() {
             }
             // ... (resto de tu lógica de descarga) ...
             // ATENCIÓN: SI '/procesar-y-descargar-imagen' ES UN ENDPOINT DE TU SERVIDOR PYTHON (app.py),
-            // DEBES USAR LA URL COMPLETA: 'http://localhost:5000/procesar-y-descargar-imagen'
-            // const response = await fetch('/procesar-y-descargar-imagen', { /* ... */ });
+            // DEBES USAR LA URL COMPLETA: `${PYTHON_API_BASE_URL}/procesar-y-descargar-imagen`
+            // const response = await fetch(`${PYTHON_API_BASE_URL}/procesar-y-descargar-imagen`, { /* ... */ });
         });
     }
 
@@ -621,7 +627,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (changeBackgroundButton) {
         changeBackgroundButton.addEventListener('click', () => {
-            // Asegurarse que imagenLightboxElement exista antes de acceder a su 'src'
             if (!currentOriginalWasabiUrlForLightbox && !(imagenLightboxElement && imagenLightboxElement.src)) {
                  alert("Por favor, abre una imagen en el lightbox primero."); return;
             }
