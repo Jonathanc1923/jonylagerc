@@ -8,4 +8,3 @@ onnxruntime
 # Especifica versiones si es necesario, ej:
 # rembg==0.5.5
 # onnxruntime==1.17.0
-faulthandler
