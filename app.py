@@ -125,7 +125,9 @@ def list_backgrounds_api():
         print(f"ERROR: Excepción en list_backgrounds_api: {e}")
         traceback.print_exc()
         return jsonify({"error": "Error interno del servidor al listar fondos"}), 500
-
+@app.route('/')
+def health_check():
+    return jsonify({"status": "healthy", "message": "Python API for Jony Lager is running"}), 200
 # -----------------------------------------------------------------------------
 # 4. ENDPOINT PARA QUITAR FONDOS
 # -----------------------------------------------------------------------------
