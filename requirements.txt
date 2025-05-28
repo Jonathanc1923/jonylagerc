@@ -3,4 +3,8 @@ Flask-CORS
 rembg
 Pillow
 requests
-gunicorn 
+gunicorn
+onnxruntime # <--- ¡AÑADE ESTA LÍNEA!
+# Especifica versiones si es necesario, ej:
+# rembg==0.5.5
+# onnxruntime==1.17.0
