@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 rembg
 Pillow
 onnxruntime
@@ -13,4 +12,4 @@ onnxruntime
 # Especifica versiones si es necesario, ej:
 # rembg==0.5.5
 # onnxruntime==1.17.0
->>>>>>> 8b20c7efb97ce950f00c39da4dd5df8fdf247434
+
