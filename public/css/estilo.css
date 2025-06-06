@@ -598,9 +598,9 @@ img {
 
 /* Este es el panel que contendrá las miniaturas de los fondos */
 #backgrounds-panel-container {
-    /* Hereda estilos del panel de filtros, pero lo especializamos */
     position: absolute; 
-    bottom: calc(100% + 8px); 
+    /* CAMBIO 1: Aumentamos el valor de 8px a 15px para subir más el panel */
+    bottom: calc(100% + 15px); 
     left: 50%; 
     transform: translateX(-50%); 
     background-color: rgba(30, 30, 30, 0.95);
@@ -610,21 +610,41 @@ img {
     z-index: 1004;
     display: none; /* JS se encarga de mostrarlo */
 
-    /* Lógica de la cuadrícula */
     display: grid;
-    /* Crea columnas que se ajustan automáticamente, con un tamaño mínimo de 80px */
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 8px; /* Espacio entre las imágenes */
-    max-width: 450px; /* Ancho máximo para que no se extienda demasiado en pantallas grandes */
-    max-height: 200px; /* Altura máxima con scroll si hay muchos fondos */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Miniaturas un poco más grandes */
+    gap: 8px;
+    max-width: 480px; 
+    max-height: 220px;
     overflow-y: auto;
+}
+
+/* Estilo para cada miniatura de fondo dentro de la cuadrícula */
+.background-thumbnail {
+    width: 100%;
+    aspect-ratio: 16 / 10; /* Una proporción más panorámica para los fondos */
+    
+    /* CAMBIO 2: contain en lugar de cover para mostrar la imagen completa */
+    object-fit: contain; 
+    
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    
+    /* Un color de fondo sutil por si la imagen no llena el cuadro */
+    background-color: rgba(0,0,0,0.2);
+}
+
+.background-thumbnail:hover {
+    border-color: var(--color-acento);
+    transform: scale(1.05);
 }
 
 /* Estilo para cada miniatura de fondo dentro de la cuadrícula */
 .background-thumbnail {
     width: 100%; /* Ocupa todo el espacio de su celda */
     aspect-ratio: 4 / 3; /* Mantiene una proporción consistente (ej. 4:3) */
-    object-fit: cover; /* Asegura que la imagen cubra el área sin deformarse */
+    object-fit: contain; /* Asegura que la imagen cubra el área sin deformarse */
     cursor: pointer;
     border: 2px solid transparent;
     border-radius: 4px;

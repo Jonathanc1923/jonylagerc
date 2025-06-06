@@ -262,6 +262,8 @@ if (lightboxElement) {
     }
 }
 
+// Reemplaza esta función completa en tu archivo script.js
+
 async function loadBackgrounds() {
     if (!backgroundsPanelContainer) return;
     try {
@@ -270,13 +272,17 @@ async function loadBackgrounds() {
         
         const backgroundFiles = await response.json();
         
-        backgroundsPanelContainer.innerHTML = '';
+        backgroundsPanelContainer.innerHTML = ''; // Limpiar panel
         backgroundFiles.forEach(bgFile => {
             const bgThumb = document.createElement('img');
             bgThumb.src = bgFile.url;
             bgThumb.className = 'background-thumbnail';
             bgThumb.title = `Usar fondo: ${bgFile.name}`;
             bgThumb.setAttribute('data-bg-url', bgFile.url);
+
+            // --- MEJORA DE RENDIMIENTO ---
+            // Esta línea le dice al navegador que cargue las imágenes solo cuando sea necesario.
+            bgThumb.loading = 'lazy'; 
             
             bgThumb.addEventListener('click', handleBackgroundSelection);
             
@@ -304,7 +310,7 @@ async function handleBackgroundSelection(event) {
     const loadingOverlay = document.createElement('div');
     loadingOverlay.className = 'loading-overlay';
     // Se usa <br> para un salto de línea y mejor formato del mensaje
-    loadingOverlay.innerHTML = '<span>Espere, puede demorar hasta 1 minuto.<br>No cierre la ventana.</span>';
+    loadingOverlay.innerHTML = '<span>Espere, puede demorar hasta 2 minutos.<br>No cierre la ventana.</span>';
     
     // Lo añadimos al lightbox principal para que lo cubra todo
     if (lightboxElement) {
