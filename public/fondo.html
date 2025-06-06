@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Imagen con Kie.ai (Con Subida de Usuario)</title>
+    <style>
+        /* ... (los mismos estilos que antes) ... */
+        body { font-family: sans-serif; margin: 20px; max-width: 700px; margin: 20px auto; padding: 15px; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);}
+        h1 { text-align: center; color: #333; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555;}
+        input[type="text"], input[type="url"], input[type="file"], textarea, select {
+            margin-bottom: 15px; padding: 10px; width: 100%;
+            box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;
+            font-size: 1em;
+        }
+        textarea { min-height: 100px; resize: vertical; }
+        button {
+            padding: 12px 20px; width: 100%; box-sizing: border-box;
+            border: none; border-radius: 4px; background-color: #007bff;
+            color: white; font-size: 1.1em; cursor: pointer; transition: background-color 0.3s ease;
+        }
+        button:hover { background-color: #0056b3; }
+        img { max-width: 100%; margin-top: 20px; border: 1px solid #ccc; display: block; background-color: #fff; padding: 5px; border-radius: 4px;}
+        .message { padding: 10px; margin-top: 15px; border-radius: 4px; font-weight: bold; word-wrap: break-word; }
+        .error { background-color: #ffebee; color: #c62828; border: 1px solid #ef9a9a;}
+        .info { background-color: #e3f2fd; color: #1565c0; border: 1px solid #90caf9;}
+        .loader {
+            border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%;
+            width: 40px; height: 40px; animation: spin 1s linear infinite;
+            display: none; margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        small { display: block; margin-bottom: 10px; color: #777; }
+    </style>
+</head>
+<body>
+    <h1>Generar Imagen con Kie.ai (Con Subida de Usuario)</h1>
+
+    <div>
+        <label for="userImageFile">Sube tu imagen (opcional):</label>
+        <input type="file" id="userImageFile" accept="image/*">
+        <small>Si seleccionas un archivo, se intentará "subir" (simulado aquí) para obtener una URL antes de llamar a Kie.ai.</small>
+    </div>
+    <div>
+        <label for="imageUrl">O ingresa URL de Imagen de Referencia (si no subes archivo):</label>
+        <input type="text" id="imageUrl" placeholder="Ej: https://ejemplo.com/imagen.png">
+    </div>
+    <div>
+        <label for="prompt">Prompt (describe la imagen deseada):</label>
+        <textarea id="prompt" placeholder="Ej: 'Un hermoso atardecer sobre las montañas'"></textarea>
+        <small>Se debe proporcionar imagen (subida o URL) o prompt.</small>
+    </div>
+    <div>
+        <label for="size">Relación de aspecto (Requerido):</label>
+        <select id="size">
+            <option value="1:1" selected>1:1 (Cuadrado)</option>
+            <option value="3:2">3:2 (Horizontal)</option>
+            <option value="2:3">2:3 (Vertical)</option>
+        </select>
+    </div>
+
+    <button onclick="handleFileUploadAndGenerate()">Generar Imagen</button>
+
+    <div id="loader" class="loader"></div>
+    <div id="statusMessages">
+        <p id="errorMessage" class="message error" style="display:none;"></p>
+        <p id="infoMessage" class="message info" style="display:none;"></p>
+    </div>
+    <div id="result">
+        <h2>Imagen Resultante:</h2>
+        <img id="resultImage" src="#" alt="Imagen procesada" style="display:none;">
+    </div>
+
+    <script>
+        // --- Configuración (Kie.ai API) ---
+        const KIE_API_KEY = "6f542814452d0f652395954748bd4b41"; // Tu API key
+        const KIE_API_BASE_URL = "https://kieai.erweima.ai";
+        const GENERATE_ENDPOINT = "/api/v1/gpt4o-image/generate";
+        const RECORD_INFO_ENDPOINT = "/api/v1/gpt4o-image/record-info";
+        const DOWNLOAD_URL_ENDPOINT = "/api/v1/gpt4o-image/download-url";
+
+        // --- Elementos del DOM ---
+        const userImageFileElement = document.getElementById('userImageFile');
+        const imageUrlElement = document.getElementById('imageUrl');
+        const promptElement = document.getElementById('prompt');
+        const sizeElement = document.getElementById('size');
+        const resultImageElement = document.getElementById('resultImage');
+        const errorMessageElement = document.getElementById('errorMessage');
+        const infoMessageElement = document.getElementById('infoMessage');
+        const loaderElement = document.getElementById('loader');
+
+        // --- Funciones de Mensajes (igual que antes) ---
+        function showMessage(element, message, isError = false) {
+            element.textContent = message;
+            element.style.display = 'block';
+            element.className = isError ? 'message error' : 'message info';
+        }
+        function clearMessages() {
+            errorMessageElement.style.display = 'none';
+            infoMessageElement.style.display = 'none';
+            resultImageElement.style.display = 'none';
+            resultImageElement.src = "#";
+        }
+
+        // --- Función de Ayuda para Llamadas a API (igual que antes) ---
+        async function apiRequest(endpoint, method = 'GET', body = null) {
+            const url = KIE_API_BASE_URL + endpoint;
+            const headers = {
+                'Authorization': 'Bearer ' + KIE_API_KEY,
+                'Accept': 'application/json'
+            };
+            const options = { method, headers };
+            if (body) {
+                headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(body);
+            }
+            console.log(`Enviando ${method} a: ${url}`, body ? `con body: ${JSON.stringify(body)}` : '');
+            const response = await fetch(url, options);
+            const responseText = await response.text();
+            console.log(`Respuesta cruda de ${url}:`, responseText);
+            let responseData;
+            try { responseData = JSON.parse(responseText); }
+            catch (e) {
+                if (!response.ok) throw new Error(`Error API [${response.status}] en ${url}: ${responseText || response.statusText}`);
+                console.error("Respuesta no fue JSON válido:", responseText);
+                throw new Error(`Respuesta de ${url} no fue JSON válido.`);
+            }
+            const operationCode = responseData.code !== undefined ? responseData.code : response.status;
+            if (operationCode !== 200) {
+                const errorMessage = `Error API [${operationCode}] en ${url}: ${responseData.msg || responseData.message || responseData.errorMessage || 'Error desconocido'}`;
+                throw new Error(errorMessage);
+            }
+            return responseData.data;
+        }
+
+        // --- NUEVA FUNCIÓN para manejar la subida y luego la generación ---
+        async function handleFileUploadAndGenerate() {
+            clearMessages();
+            loaderElement.style.display = 'block';
+
+            const file = userImageFileElement.files[0];
+            let uploadedFileUrl = imageUrlElement.value.trim(); // Tomar la URL del input de texto por defecto
+
+            if (file) {
+                showMessage(infoMessageElement, `Procesando archivo "${file.name}"...`);
+                try {
+                    // ---------------------------------------------------------------------------
+                    // AQUÍ IRÍA LA LÓGICA PARA SUBIR 'file' A TU PROPIO SERVIDOR O SERVICIO DE ALMACENAMIENTO
+                    // Y OBTENER LA 'uploadedFileUrl'.
+                    //
+                    // Ejemplo Conceptual (NO FUNCIONAL SIN UN BACKEND REAL):
+                    //
+                    // const formDataForUpload = new FormData();
+                    // formDataForUpload.append('imageFile', file);
+                    // const uploadResponse = await fetch('https://TU_PROPIO_SERVIDOR.com/upload', { // Endpoint de tu backend
+                    //     method: 'POST',
+                    //     body: formDataForUpload
+                    // });
+                    // if (!uploadResponse.ok) throw new Error('Falló la subida del archivo a tu servidor.');
+                    // const uploadResult = await uploadResponse.json();
+                    // uploadedFileUrl = uploadResult.url; // Asumiendo que tu backend devuelve la URL así
+                    //
+                    // ---------------------------------------------------------------------------
+                    
+                    // ***** INICIO: SIMULACIÓN PARA PRUEBAS SIN BACKEND REAL *****
+                    // Para este ejemplo, si seleccionas un archivo, vamos a simular que no tenemos backend
+                    // y te pediremos que uses el campo de URL.
+                    // EN UNA APLICACIÓN REAL, DEBES IMPLEMENTAR LA SUBIDA.
+                    if (!uploadedFileUrl) { // Solo si no se proveyó una URL en el campo de texto
+                        showMessage(errorMessageElement, `SIMULACIÓN: Para usar el archivo "${file.name}", necesitarías un backend para subirlo y obtener una URL. Por favor, sube tu imagen a un servicio como Imgur, obtén la URL directa y pégala en el campo de URL de imagen.`, true);
+                        loaderElement.style.display = 'none';
+                        return;
+                    }
+                    // ***** FIN: SIMULACIÓN *****
+
+                    showMessage(infoMessageElement, `Archivo "${file.name}" listo para usarse mediante URL (o se usará la URL provista).`);
+                } catch (error) {
+                    loaderElement.style.display = 'none';
+                    showMessage(errorMessageElement, `Error al procesar/subir archivo: ${error.message}`, true);
+                    console.error('Error en subida simulada:', error);
+                    return;
+                }
+            }
+
+            // Continuar con la generación usando la URL (ya sea la pegada o la "obtenida" de la subida)
+            const filesUrlArray = uploadedFileUrl ? uploadedFileUrl.split(',').map(url => url.trim()).filter(url => url && url.startsWith('http')) : [];
+            initiateKieAiGeneration(filesUrlArray);
+        }
+
+        async function initiateKieAiGeneration(filesUrlArray) {
+            // Esta función ahora solo se encarga de la llamada a Kie.ai
+            // Asume que filesUrlArray ya está listo.
+            
+            const promptText = promptElement.value;
+             if (!promptText.trim() && (!filesUrlArray || filesUrlArray.length === 0)) {
+                showMessage(errorMessageElement, 'Por favor, ingresa un prompt o proporciona una URL de imagen válida.', true);
+                loaderElement.style.display = 'none'; // Ocultar loader si ya estaba visible
+                return;
+            }
+
+            // Si el loader no está visible (porque no hubo subida de archivo), mostrarlo ahora.
+            if (loaderElement.style.display === 'none') {
+                 clearMessages(); // Limpiar mensajes previos si venimos de un intento sin subida
+                 loaderElement.style.display = 'block';
+            }
+            showMessage(infoMessageElement, 'Preparando solicitud para Kie.ai...');
+
+            const requestBody = {
+                size: sizeElement.value,
+            };
+            if (promptText.trim()) {
+                requestBody.prompt = promptText.trim();
+            }
+            if (filesUrlArray && filesUrlArray.length > 0) {
+                 if (filesUrlArray.length > 5) {
+                     showMessage(errorMessageElement, 'Puedes proporcionar un máximo de 5 URLs de imagen.', true);
+                     loaderElement.style.display = 'none';
+                     return;
+                }
+                requestBody.filesUrl = filesUrlArray;
+            }
+            
+            try {
+                showMessage(infoMessageElement, 'Enviando solicitud de generación a Kie.ai...');
+                const generateData = await apiRequest(GENERATE_ENDPOINT, 'POST', requestBody);
+                const taskId = generateData.taskId;
+
+                if (taskId) {
+                    showMessage(infoMessageElement, `Generación iniciada con Kie.ai. ID de tarea: ${taskId}. Consultando estado...`);
+                    pollForTaskResult(taskId);
+                } else {
+                    throw new Error("Respuesta de Kie.ai /generate no contenía 'taskId' esperado en 'data'.");
+                }
+            } catch (error) {
+                loaderElement.style.display = 'none';
+                showMessage(errorMessageElement, error.message, true);
+                console.error('Error en initiateKieAiGeneration:', error);
+            }
+        }
+
+        // --- Funciones pollForTaskResult y processImageResult (son las mismas que en la respuesta anterior) ---
+        async function pollForTaskResult(taskId) {
+            const MAX_ATTEMPTS = 30;
+            const POLLING_INTERVAL_MS = 5000;
+            let attempts = 0;
+            console.log(`Iniciando sondeo para tarea ${taskId}`);
+            try {
+                while (attempts < MAX_ATTEMPTS) {
+                    attempts++;
+                    showMessage(infoMessageElement, `Consultando estado de tarea ${taskId} (Intento ${attempts} de ${MAX_ATTEMPTS})...`);
+                    const recordInfoData = await apiRequest(`${RECORD_INFO_ENDPOINT}?taskId=${taskId}`, 'GET');
+                    console.log(`Respuesta de record-info (intento ${attempts}):`, recordInfoData);
+                    const currentStatus = recordInfoData.status;
+                    const finalErrorMessage = recordInfoData.errorMessage;
+                    const responseBlock = recordInfoData.response;
+                    const resultUrls = responseBlock && responseBlock.resultUrls ? responseBlock.resultUrls : null;
+                    const imageUrl = resultUrls && resultUrls.length > 0 ? resultUrls[0] : null;
+
+                    if (currentStatus === 'SUCCESS' || currentStatus === 'succeeded' || currentStatus === 'COMPLETED') {
+                        if (imageUrl) {
+                            showMessage(infoMessageElement, '¡Generación de imagen exitosa! Obteniendo URL de descarga directa...');
+                            await processImageResult(taskId, imageUrl);
+                            return;
+                        } else {
+                            throw new Error("Tarea completada pero no se encontró URL de imagen en la respuesta de estado (response.resultUrls). Respuesta: " + JSON.stringify(recordInfoData));
+                        }
+                    } else if (currentStatus === 'GENERATE_FAILED' || currentStatus === 'failed' || currentStatus === 'CREATE_TASK_FAILED' || currentStatus === 'error') {
+                        throw new Error(`La generación de la imagen falló. Estado: ${currentStatus}. Razón: ${finalErrorMessage || 'Desconocida'}`);
+                    } else if (currentStatus === 'GENERATING' || currentStatus === 'pending' || currentStatus === 'processing' || currentStatus === 'queued' || !currentStatus) {
+                        showMessage(infoMessageElement, `Tarea ${taskId} aún en progreso (Estado: ${currentStatus || 'desconocido'}). Siguiente consulta en ${POLLING_INTERVAL_MS / 1000}s.`);
+                        await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
+                    } else {
+                        console.warn("Estado no reconocido recibido de record-info:", currentStatus, recordInfoData);
+                        showMessage(infoMessageElement, `Tarea ${taskId} en estado no reconocido: ${currentStatus}. Reintentando...`);
+                        await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
+                    }
+                }
+                throw new Error("Se alcanzó el máximo de intentos de sondeo.");
+            } catch (error) {
+                loaderElement.style.display = 'none';
+                showMessage(errorMessageElement, error.message, true);
+                console.error('Error en pollForTaskResult:', error);
+            }
+        }
+
+        async function processImageResult(taskId, originalImageUrl) {
+             try {
+                showMessage(infoMessageElement, `Obteniendo URL de descarga directa para la imagen...`);
+                const downloadDataString = await apiRequest(DOWNLOAD_URL_ENDPOINT, 'POST', { taskId: taskId, url: originalImageUrl });
+                if (typeof downloadDataString === 'string' && downloadDataString.startsWith('http')) {
+                    resultImageElement.src = downloadDataString;
+                    resultImageElement.style.display = 'block';
+                    loaderElement.style.display = 'none';
+                    showMessage(infoMessageElement, 'Imagen lista y mostrada.');
+                } else {
+                     console.error("Respuesta inesperada de 'download-url':", downloadDataString);
+                     showMessage(infoMessageElement, 'No se pudo obtener URL directa, intentando con URL original (podría fallar por CORS).');
+                     resultImageElement.src = originalImageUrl;
+                     resultImageElement.style.display = 'block';
+                     loaderElement.style.display = 'none';
+                }
+            } catch (error) {
+                loaderElement.style.display = 'none';
+                showMessage(errorMessageElement, `Error al obtener URL de descarga directa: ${error.message}. Mostrando URL original (puede fallar por CORS).`, true);
+                console.error('Error en processImageResult:', error);
+                resultImageElement.src = originalImageUrl;
+                resultImageElement.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

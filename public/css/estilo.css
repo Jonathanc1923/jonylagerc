@@ -446,3 +446,141 @@ img {
 
     .slider-container, .filters-panel { width: calc(100% - 20px); left: 10px; transform: translateX(0); bottom: calc(100% + 5px); }
 }
+/* ==========================================================================
+   NUEVOS ESTILOS PARA LA FUNCIONALIDAD DE FONDOS Y CARGA
+   ========================================================================== */
+
+/* --- 1. Estilos para la Cuadrícula de Fondos --- */
+
+/* Este es el panel que contendrá las miniaturas de los fondos */
+#backgrounds-panel-container {
+    /* Hereda estilos del panel de filtros, pero lo especializamos */
+    position: absolute; 
+    bottom: calc(100% + 8px); 
+    left: 50%; 
+    transform: translateX(-50%); 
+    background-color: rgba(30, 30, 30, 0.95);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 -2px 15px rgba(0,0,0,0.3);
+    z-index: 1004;
+    display: none; /* JS se encarga de mostrarlo */
+
+    /* Lógica de la cuadrícula */
+    display: grid;
+    /* Crea columnas que se ajustan automáticamente, con un tamaño mínimo de 80px */
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px; /* Espacio entre las imágenes */
+    max-width: 450px; /* Ancho máximo para que no se extienda demasiado en pantallas grandes */
+    max-height: 200px; /* Altura máxima con scroll si hay muchos fondos */
+    overflow-y: auto;
+}
+
+/* Estilo para cada miniatura de fondo dentro de la cuadrícula */
+.background-thumbnail {
+    width: 100%; /* Ocupa todo el espacio de su celda */
+    aspect-ratio: 4 / 3; /* Mantiene una proporción consistente (ej. 4:3) */
+    object-fit: cover; /* Asegura que la imagen cubra el área sin deformarse */
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.background-thumbnail:hover {
+    border-color: var(--color-acento); /* Resalta al pasar el mouse */
+    transform: scale(1.05);
+}
+
+
+/* --- 2. Estilos para el Mensaje de Carga Mejorado --- */
+
+.loading-overlay {
+    /* Lo posicionamos para que cubra todo el lightbox */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8); /* Fondo oscuro semitransparente */
+    color: white;
+    
+    /* La magia del centrado perfecto */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 1000; /* Se asegura que esté por encima de la imagen y otros controles */
+    border-radius: 5px; /* Un borde sutil */
+    /* Este elemento será añadido y quitado por JavaScript */
+}
+
+/* Estilo para el texto dentro del mensaje de carga */
+.loading-overlay span {
+    text-align: center;
+    font-size: 1.8rem;
+    font-family: var(--fuente-titulos);
+    padding: 2rem;
+    max-width: 80%;
+    line-height: 1.5;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+}
+/* ==========================================================================
+   ESTILO ESPECIAL PARA BOTÓN "CAMBIAR FONDO"
+   ========================================================================== */
+
+/* Estilo principal del botón para hacerlo destacar */
+#editor-toolbar #tool-change-bg {
+    /* Color de fondo y texto para máximo contraste */
+    background-color: var(--color-acento);
+    color: var(--color-primario);
+    
+    /* Hacemos el botón más grande y legible */
+    padding: 8px 12px;
+    min-width: 90px; /* Un poco más ancho que los demás */
+    font-size: 1.2rem; /* Fuente ligeramente más grande */
+    font-weight: 700; /* Letra en negrita */
+    border-radius: 6px;
+
+    /* Separación de los otros botones */
+    margin-left: 12px;
+    margin-right: 12px;
+
+    /* Animación sutil para llamar la atención */
+    animation: pulse-glow 2.5s infinite ease-in-out;
+    
+    /* Transiciones suaves para el efecto hover */
+    transition: all 0.3s ease;
+}
+
+/* El texto dentro del botón ahora será visible incluso en móvil */
+#editor-toolbar #tool-change-bg span {
+    display: inline !important;
+}
+
+/* Cambiamos el color del icono SVG para que contraste con el fondo */
+#editor-toolbar #tool-change-bg svg {
+    fill: var(--color-primario);
+    width: 24px; /* Icono más grande */
+    height: 24px;
+}
+
+/* Efecto al pasar el mouse por encima (hover) */
+#editor-toolbar #tool-change-bg:hover {
+    background-color: var(--color-acento-hover);
+    transform: scale(1.08); /* Un "salto" más pronunciado */
+    box-shadow: 0 4px 20px rgba(255, 193, 7, 0.4); /* Un brillo más intenso */
+}
+
+/* Definición de la animación de brillo pulsante */
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 5px rgba(255, 193, 7, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(255, 193, 7, 0.2);
+    }
+}

@@ -1,0 +1,16 @@
+# Dependencias de Node
+node_modules
+
+# Entorno virtual de Python
+venv
+/venv/
+
+# Archivo de variables de entorno locales
+.env
+
+# Archivos de configuración locales
+wasabi_config.json
+
+# Logs y archivos del sistema operativo
+npm-debug.log*
+.DS_Store
