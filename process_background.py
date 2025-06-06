@@ -11,7 +11,8 @@ def change_background(original_path, background_path, output_path):
         print(f"Python: El tamaño final DEBE SER -> {original_size}")
 
         # 2. Abrir la imagen de fondo.
-        model_name = "isnet-general-use" 
+        #model_name = "isnet-general-use" 
+        model_name = "u2netp" 
         session = new_session(model_name)
         background_img = Image.open(background_path)
 
