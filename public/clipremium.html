@@ -128,6 +128,90 @@
              /* Los estilos de .tool-button y su svg para 480px ya están en estilo.css global */
              /* #editor-toolbar .tool-button { min-width: 45px; } */
         }
+        /* ==========================================================================
+   NUEVOS ESTILOS PARA LA SECCIÓN DE GALERÍA VACÍA Y CUPÓN
+   ========================================================================== */
+#empty-gallery-content {
+    background-color: var(--color-secundario);
+    padding: 3rem;
+    border-radius: 15px;
+    max-width: 600px;
+    margin: 2rem auto;
+    border: 1px solid #444;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.coupon-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    margin-bottom: 2rem;
+    border: 2px solid var(--color-acento);
+}
+.coupon-prompt {
+    font-size: 1.8rem;
+    color: var(--color-texto-secundario);
+    margin-bottom: 2rem;
+    font-family: var(--fuente-parrafos);
+}
+.coupon-validation-area {
+    margin-top: 1rem;
+}
+#cupon-checkbox {
+    display: none; 
+}
+#cupon-checkbox + label {
+    position: relative;
+    padding-left: 35px;
+    cursor: pointer;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--color-texto-principal);
+    user-select: none;
+    transition: color 0.3s ease;
+}
+#cupon-checkbox + label:hover {
+    color: var(--color-acento);
+}
+#cupon-checkbox + label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--color-acento);
+    border-radius: 4px;
+    background: var(--color-primario);
+    transition: all 0.2s ease;
+}
+#cupon-checkbox:checked + label::after {
+    content: '✔';
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%) scale(1.2);
+    font-size: 18px;
+    color: var(--color-acento);
+    transition: transform 0.2s ease;
+}
+#validation-message {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: rgba(44, 44, 44, 0.8);
+    border-left: 5px solid var(--color-acento-hover);
+    border-radius: 8px;
+    color: var(--color-texto-principal);
+    font-size: 1.6rem;
+    line-height: 1.7;
+    text-align: left;
+    animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
     </style>
 </head>
 <body class="clipremium-body">
@@ -172,10 +256,19 @@
         <section id="clipremium-gallery-section" style="display:none;">
     <h2 id="gallery-title-premium">Tu Galería Privada</h2>
     
-    <p id="gallery-subtitle-promo">(Obtén acceso a todas las fotos que se tomaron en la sesión por s/25 adicionales, podrás cambiarles el fondo a todas las fotos de tu sesión, agregar filtros, y mucho más! Disponible por tiempo limitado!, escríbenos ahora por WhatsApp)</p>
+    <p id="gallery-subtitle-promo">Por ser cliente Premium: prueba fondos nuevos para tus fotos</p>
 
     <div id="gallery-container-premium" class="galeria-grid">
         </div>
+        <div id="empty-gallery-content" style="display: none;">
+    
+    <p class="coupon-prompt">Valida tu cupón para hacer válida tu reserva</p>
+    <div class="coupon-validation-area">
+        <input type="checkbox" id="cupon-checkbox">
+        <label for="cupon-checkbox" id="cupon-label">Hacer clic aquí para validar</label>
+        <p id="validation-message" style="display: none;"></p>
+    </div>
+</div>
 </section>
     </main>
 
@@ -294,6 +387,11 @@
             const galleryContainer = document.getElementById('gallery-container-premium');
             const galleryTitleElement = document.getElementById('gallery-title-premium');
             const loginErrorMessageElement = document.getElementById('loginErrorMessage');
+            const gallerySubtitle = document.getElementById('gallery-subtitle-promo');
+const emptyGalleryContent = document.getElementById('empty-gallery-content');
+const couponCheckbox = document.getElementById('cupon-checkbox');
+const couponLabel = document.getElementById('cupon-label');
+const validationMessage = document.getElementById('validation-message');
             
             const currentYearSpanClipremium = document.getElementById('currentYearClipremium');
             if (currentYearSpanClipremium) {
@@ -301,66 +399,150 @@
             }
 
             if (loginForm) {
-                loginForm.addEventListener('submit', async (event) => {
-                    event.preventDefault();
-                    loginErrorMessageElement.textContent = '';
-                    loginErrorMessageElement.style.display = 'none';
+    loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        loginErrorMessageElement.textContent = '';
+        loginErrorMessageElement.style.display = 'none';
 
-                    const nombreUsuario = document.getElementById('nombreUsuarioGaleria').value.trim();
-                    const codigoAcceso = document.getElementById('codigoAccesoGaleria').value.trim();
+        const nombreUsuario = document.getElementById('nombreUsuarioGaleria').value.trim();
+        const codigoAcceso = document.getElementById('codigoAccesoGaleria').value.trim();
 
-                    if (!nombreUsuario || !codigoAcceso) {
-                        loginErrorMessageElement.textContent = 'Por favor, ingresa tu usuario y código.';
-                        loginErrorMessageElement.style.display = 'block';
-                        return;
-                    }
+        if (!nombreUsuario || !codigoAcceso) {
+            loginErrorMessageElement.textContent = 'Por favor, ingresa tu usuario y código.';
+            loginErrorMessageElement.style.display = 'block';
+            return;
+        }
 
-                    const submitButton = loginForm.querySelector('button[type="submit"]');
-                    const originalButtonText = submitButton.textContent;
-                    submitButton.textContent = 'Verificando...';
-                    submitButton.disabled = true;
+        const submitButton = loginForm.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.textContent;
+        submitButton.textContent = 'Verificando...';
+        submitButton.disabled = true;
 
-                    try {
-                        const response = await fetch('/acceder-galeria-privada', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                nombre_usuario_galeria: nombreUsuario,
-                                codigo_acceso_galeria: codigoAcceso
-                            }),
-                        });
-                        const data = await response.json();
+        try {
+            const response = await fetch('/acceder-galeria-privada', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre_usuario_galeria: nombreUsuario,
+                    codigo_acceso_galeria: codigoAcceso
+                }),
+            });
+            const data = await response.json();
 
-                        if (response.ok && data.success) {
-                            loginSection.style.display = 'none';
-                            gallerySection.style.display = 'block';
-                            galleryTitleElement.textContent = data.tituloGaleria || "Tu Galería de Recuerdos";
-                            if (data.idAcceso) { 
-                                window.idAccesoGaleriaCliente = data.idAcceso;
-                                console.log("ID de Acceso guardado:", window.idAccesoGaleriaCliente);
-                            }
-                            displayImages(data.imagenes);
-                        } else {
-                            loginErrorMessageElement.textContent = data.message || 'Error de acceso. Verifica tus credenciales.';
-                            loginErrorMessageElement.style.display = 'block';
-                        }
-                    } catch (error) {
-                        console.error('Error en el proceso de login:', error);
-                        loginErrorMessageElement.textContent = 'No se pudo conectar con el servidor. Intenta más tarde.';
-                        loginErrorMessageElement.style.display = 'block';
-                    } finally {
-                        submitButton.textContent = originalButtonText;
-                        submitButton.disabled = false;
-                    }
-                });
+            if (response.ok && data.success) {
+                // --- LÓGICA MODIFICADA ---
+
+                // Primero, preparamos la vista de la galería
+                loginSection.style.display = 'none';
+                gallerySection.style.display = 'block';
+                galleryTitleElement.textContent = data.tituloGaleria || "Tu Galería de Recuerdos";
+                
+                // CAMBIO 1: Guardamos en sessionStorage en lugar de una variable global. Es más seguro y robusto.
+                if (data.idAcceso) { 
+                    sessionStorage.setItem('idAccesoGaleriaCliente', data.idAcceso);
+                    console.log("ID de Acceso guardado en sessionStorage:", data.idAcceso);
+                }
+                
+                // CAMBIO 2: Añadimos la lógica para verificar si la galería tiene imágenes.
+                if (data.imagenes && data.imagenes.length > 0) {
+                    // Si la galería TIENE imágenes...
+                    galleryContainer.style.display = 'grid'; // Mostramos el contenedor de la galería
+                    emptyGalleryContent.style.display = 'none'; // Ocultamos el del cupón
+                    if(gallerySubtitle) gallerySubtitle.style.display = 'block'; // Mostramos la oferta
+                    
+                    displayImages(data.imagenes); // Llamamos a tu función para mostrar las fotos
+                } else {
+                    // Si la galería está VACÍA...
+                    galleryContainer.style.display = 'none'; // Ocultamos el contenedor de la galería
+                    emptyGalleryContent.style.display = 'block'; // Mostramos la sección del cupón
+                    if(gallerySubtitle) gallerySubtitle.style.display = 'none'; // Ocultamos la oferta
+                }
+
+            } else {
+                loginErrorMessageElement.textContent = data.message || 'Error de acceso. Verifica tus credenciales.';
+                loginErrorMessageElement.style.display = 'block';
             }
+        } catch (error) {
+            console.error('Error en el proceso de login:', error);
+            loginErrorMessageElement.textContent = 'No se pudo conectar con el servidor. Intenta más tarde.';
+            loginErrorMessageElement.style.display = 'block';
+        } finally {
+            submitButton.textContent = originalButtonText;
+            submitButton.disabled = false;
+        }
+    });
+    if (couponCheckbox) {
+    couponCheckbox.addEventListener('change', () => {
+        if (couponCheckbox.checked) {
+            validationMessage.innerHTML = `<strong>Validación: 55246.</strong><br>Comparte este código con tu asesor por WhatsApp ahora.<br><br>Tu cupón ha sido registrado y validado, no olvides llegar 10 minutos antes a tu sesión, ¡esperamos que lo disfrutes!`;
+            validationMessage.style.display = 'block';
+            couponCheckbox.style.display = 'none';
+            couponLabel.style.display = 'none';
+        }
+    });
+}
+}
 
-            function displayImages(imagenes) {
-    galleryContainer.innerHTML = '';
+            // REEMPLAZA TU FUNCIÓN displayImages COMPLETA POR ESTA:
+function displayImages(imagenes) {
+    // Obtenemos los elementos del DOM que necesitamos controlar
+    const galleryContainer = document.getElementById('gallery-container-premium');
+    const emptyGalleryContent = document.getElementById('empty-gallery-content');
+    const gallerySubtitle = document.getElementById('gallery-subtitle-promo');
+
+    // --- LÓGICA UNIFICADA ---
     if (!imagenes || imagenes.length === 0) {
-        galleryContainer.innerHTML = '<p style="color: var(--color-texto-secundario); font-size: 1.8rem;">No hay imágenes disponibles en esta galería.</p>';
-        return;
+        // CASO 1: La galería está VACÍA
+        console.log("Detectada galería vacía. Mostrando cupón.");
+        galleryContainer.style.display = 'none';      // Ocultamos la galería
+        emptyGalleryContent.style.display = 'block';  // Mostramos el cupón
+        if (gallerySubtitle) gallerySubtitle.style.display = 'none'; // Ocultamos la oferta
+        return; // Terminamos la función aquí. No hay nada más que hacer.
     }
+
+    // CASO 2: La galería TIENE imágenes (el código solo llega aquí si no está vacía)
+    console.log(`Detectadas ${imagenes.length} imágenes. Mostrando galería.`);
+    galleryContainer.style.display = 'grid';      // Mostramos la galería
+    emptyGalleryContent.style.display = 'none';   // Ocultamos el cupón
+    if (gallerySubtitle) gallerySubtitle.style.display = 'block'; // Mostramos la oferta
+
+    galleryContainer.innerHTML = ''; // Limpiamos la galería solo si vamos a añadir imágenes
+
+    imagenes.forEach((imgData, index) => {
+        let viewUrl = typeof imgData === 'string' ? imgData : imgData.viewUrl;
+        let downloadUrl = typeof imgData === 'string' ? imgData : (imgData.downloadUrl || viewUrl);
+        let fileName = typeof imgData === 'string' ? `foto_cliente_${index + 1}.jpg` : (imgData.originalName || `foto_cliente_${index + 1}.jpg`);
+        let title = `Foto ${index + 1}` + (imgData.originalName ? ` - ${imgData.originalName}` : '');
+
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'item-galeria';
+
+        const lightboxLink = document.createElement('a');
+        lightboxLink.href = viewUrl;
+        lightboxLink.setAttribute('data-lightbox', 'clipremium-gallery');
+        lightboxLink.setAttribute('data-title', title);
+        lightboxLink.setAttribute('data-original-wasabi-url', viewUrl);
+        lightboxLink.setAttribute('data-original-name', fileName);
+
+        const imgElement = document.createElement('img');
+        imgElement.src = viewUrl;
+        imgElement.alt = title;
+        imgElement.loading = 'lazy';
+
+        lightboxLink.appendChild(imgElement);
+        itemDiv.appendChild(lightboxLink);
+        
+        // Aquí puedes añadir tu lógica para el botón de descarga y el promo-overlay si lo deseas
+
+        galleryContainer.appendChild(itemDiv);
+    });
+
+    if (typeof window.inicializarLightboxGlobal === 'function') {
+        window.inicializarLightboxGlobal('#gallery-container-premium a[data-lightbox="clipremium-gallery"]');
+    } else {
+        console.warn('Función global inicializarLightboxGlobal no encontrada.');
+    }
+
 
     imagenes.forEach((imgData, index) => {
         let viewUrl = typeof imgData === 'string' ? imgData : imgData.viewUrl;

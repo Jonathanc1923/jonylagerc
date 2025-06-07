@@ -1151,3 +1151,55 @@ img {
         grid-template-columns: 1fr;
     }
 }
+
+/* ==========================================================================
+   ESTILOS PARA LA SECCIÓN CLIPREMIUM (VALIDACIÓN DE CUPÓN)
+   ========================================================================== */
+
+#mensaje-galeria-vacia {
+    padding: 30px;
+    background-color: var(--color-secundario);
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.validacion-cupon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2rem;
+}
+
+.validacion-cupon input#validar-cupon {
+    width: 20px;
+    height: 20px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+}
+
+.validacion-cupon label#label-validar-cupon {
+    font-size: 1.6rem;
+    color: var(--color-texto-principal);
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.validacion-cupon label#label-validar-cupon:hover {
+    color: var(--color-acento);
+}
+
+#mensaje-validacion {
+    font-size: 1.6rem;
+    text-align: center;
+    padding: 15px;
+    background-color: rgba(255, 193, 7, 0.1); /* Un tono suave del color acento */
+    border: 1px solid var(--color-acento);
+    border-radius: 8px;
+    margin-top: 1rem;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
