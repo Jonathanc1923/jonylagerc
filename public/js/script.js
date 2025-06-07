@@ -310,7 +310,7 @@ async function handleBackgroundSelection(event) {
     const loadingOverlay = document.createElement('div');
     loadingOverlay.className = 'loading-overlay';
     // Se usa <br> para un salto de línea y mejor formato del mensaje
-    loadingOverlay.innerHTML = '<span>Espere, puede demorar hasta 2 minutos.<br>No cierre la ventana.</span>';
+    loadingOverlay.innerHTML = '<span>Espere, puede demorar hasta 2 minutos.<br>No cierre la ventana. Aprovecha, por s/25 accede a todas las fotos de tu sesión, podrás cambiarle fondo a todas! (promoción disponible poco tiempo)</span>';
     
     // Lo añadimos al lightbox principal para que lo cubra todo
     if (lightboxElement) {

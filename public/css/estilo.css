@@ -343,22 +343,48 @@ img {
 }
 
 /* Botón de Descarga en MINIATURAS */
-.download-button-wrapper {
-    position: absolute; bottom: 10px; right: 10px; z-index: 5;
-}
+/* Busca esta regla y reemplázala por esta versión más compacta */
 .download-button {
-    background-color: var(--color-acento); color: var(--color-primario) !important;
-    padding: 8px 12px; border: none; border-radius: 20px;
-    cursor: pointer; text-decoration: none; font-size: 1.3rem; font-weight: bold;
+    background-color: var(--color-acento);
+    color: var(--color-primario) !important;
+    
+    /* --- CAMBIOS PARA HACERLO MÁS PEQUEÑO --- */
+    padding: 5px 10px; /* Menos relleno interno */
+    font-size: 1.1rem; /* Texto más pequeño */
+    /* --- FIN DE CAMBIOS --- */
+    
+    border: none;
+    border-radius: 16px; /* Un poco menos redondeado para que coincida */
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: bold;
     transition: background-color 0.2s ease, transform 0.2s ease;
-    display: inline-flex; align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Sombra un poco más sutil */
 }
-.download-button:hover {
-    background-color: var(--color-acento-hover);
-    transform: scale(1.05);
+
+/* También ajustamos el icono SVG que está dentro del botón */
+.download-button svg {
+    /* --- CAMBIOS PARA HACERLO MÁS PEQUEÑO --- */
+    width: 12px;      /* Icono más pequeño */
+    height: 12px;
+    margin-right: 5px; /* Menos espacio entre icono y texto */
+    /* --- FIN DE CAMBIOS --- */
+
+    fill: var(--color-primario);
 }
-.download-button svg { width: 14px; height: 14px; margin-right: 6px; fill: var(--color-primario); }
+/* ==========================================================================
+   CORRECCIÓN DE POSICIÓN PARA BOTÓN DE DESCARGA
+   ========================================================================== */
+
+/* Este es el contenedor invisible que posiciona el botón */
+.download-button-wrapper {
+    position: absolute;
+    bottom: 10px; /* Distancia desde el borde inferior */
+    right: 10px;  /* Distancia desde el borde derecho */
+    z-index: 5;   /* Se asegura de que esté por encima de la imagen */
+}
 
 /* Estilos para la Galería Expandible (Lightbox) */
 .lightbox {
@@ -746,5 +772,107 @@ img {
     }
     100% {
         box-shadow: 0 0 5px rgba(255, 193, 7, 0.2);
+    }
+}
+#gallery-subtitle-promo {
+    text-align: center;
+    max-width: 700px;
+    margin: -1.5rem auto 3rem auto;
+    padding: 1rem 1.5rem;
+    font-size: 1.7rem;
+    font-style: italic;
+    color: var(--color-acento); /* Mantenemos el color amarillo */
+    line-height: 1.6;
+    background-color: rgba(255, 193, 7, 0.05);
+    border-left: 4px solid var(--color-acento);
+    border-radius: 4px;
+
+    /* --- CAMBIOS PARA HACERLO MÁS LLAMATIVO --- */
+    
+    font-weight: 500; /* Hacemos la letra un poco más gruesa (normal es 400) */
+    
+    /* ¡Aquí aplicamos la misma animación de brillo que el botón! */
+    animation: pulse-glow 2.5s infinite ease-in-out; 
+    
+    transition: transform 0.3s ease; /* Para un efecto suave al pasar el mouse */
+}
+
+/* Efecto sutil al pasar el mouse por encima para más interactividad */
+#gallery-subtitle-promo:hover {
+    transform: scale(0.7);
+}
+
+/* Esta es la definición de la animación. 
+  Ya la deberías tener en tu CSS por el botón, pero la incluyo para asegurar.
+*/
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 5px rgba(255, 193, 7, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(255, 193, 7, 0.2);
+    }
+}
+
+/* ==========================================================================
+   ESTILOS PARA EL TEXTO PROMOCIONAL SOBRE LAS FOTOS DE LA GALERÍA
+   ========================================================================== */
+
+/* El contenedor de la miniatura ya tiene position: relative, lo que es perfecto. */
+/* Si no lo tuviera, habría que añadir: .item-galeria { position: relative; } */
+
+.promo-overlay {
+    position: absolute;
+    top: 12px; /* Distancia desde arriba */
+    left: 50%; /* Lo centramos horizontalmente */
+    transform: translateX(-50%);
+    
+    /* Estilo del fondo: un degradado llamativo */
+    background: linear-gradient(45deg, var(--color-acento), var(--color-acento-hover));
+    
+    color: var(--color-primario); /* Texto oscuro para buen contraste */
+    padding: 5px 15px;
+    border-radius: 20px; /* Bordes redondeados tipo "píldora" */
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-family: var(--fuente-titulos);
+    
+    z-index: 10; /* Se asegura que esté por encima de la imagen */
+    white-space: nowrap; /* Evita que el texto se parta en dos líneas */
+    
+    /* Sombra para darle profundidad y animacion de brillo */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    animation: pulse-promo-text 2s infinite ease-in-out;
+    
+    /* Ocultamos el texto si la miniatura es muy pequeña */
+    display: block; 
+    pointer-events: none; 
+}
+
+/* Animación de pulso para el brillo */
+@keyframes pulse-promo-text {
+    0% {
+        transform: translateX(-50%) scale(1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    50% {
+        transform: translateX(-50%) scale(1.05);
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.5); /* Sombra de color acento */
+    }
+    100% {
+        transform: translateX(-50%) scale(1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+}
+
+/* En pantallas muy pequeñas, hacemos el texto un poco más chico */
+@media (max-width: 480px) {
+    .promo-overlay {
+        font-size: 1rem;
+        padding: 4px 10px;
+        top: 8px;
     }
 }

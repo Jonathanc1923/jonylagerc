@@ -170,10 +170,13 @@
         </section>
 
         <section id="clipremium-gallery-section" style="display:none;">
-            <h2 id="gallery-title-premium">Tu Galería Privada</h2>
-            <div id="gallery-container-premium" class="galeria-grid">
-                </div>
-        </section>
+    <h2 id="gallery-title-premium">Tu Galería Privada</h2>
+    
+    <p id="gallery-subtitle-promo">(Obtén acceso a todas las fotos que se tomaron en la sesión por s/25 adicionales, podrás cambiarles el fondo a todas las fotos de tu sesión, agregar filtros, y mucho más! Disponible por tiempo limitado!, escríbenos ahora por WhatsApp)</p>
+
+    <div id="gallery-container-premium" class="galeria-grid">
+        </div>
+</section>
     </main>
 
     <footer class="site-footer">
@@ -354,65 +357,74 @@
             }
 
             function displayImages(imagenes) {
-                galleryContainer.innerHTML = '';
-                if (!imagenes || imagenes.length === 0) {
-                    galleryContainer.innerHTML = '<p style="color: var(--color-texto-secundario); font-size: 1.8rem;">No hay imágenes disponibles en esta galería.</p>';
-                    return;
-                }
+    galleryContainer.innerHTML = '';
+    if (!imagenes || imagenes.length === 0) {
+        galleryContainer.innerHTML = '<p style="color: var(--color-texto-secundario); font-size: 1.8rem;">No hay imágenes disponibles en esta galería.</p>';
+        return;
+    }
 
-                imagenes.forEach((imgData, index) => {
-                    let viewUrl = typeof imgData === 'string' ? imgData : imgData.viewUrl;
-                    let downloadUrl = typeof imgData === 'string' ? imgData : (imgData.downloadUrl || viewUrl);
-                    let fileName = typeof imgData === 'string' ? `foto_cliente_${index + 1}.jpg` : (imgData.originalName || `foto_cliente_${index + 1}.jpg`);
-                    let title = `Foto ${index + 1}` + (imgData.originalName ? ` - ${imgData.originalName}` : '');
+    imagenes.forEach((imgData, index) => {
+        let viewUrl = typeof imgData === 'string' ? imgData : imgData.viewUrl;
+        let downloadUrl = typeof imgData === 'string' ? imgData : (imgData.downloadUrl || viewUrl);
+        let fileName = typeof imgData === 'string' ? `foto_cliente_${index + 1}.jpg` : (imgData.originalName || `foto_cliente_${index + 1}.jpg`);
+        let title = `Foto ${index + 1}` + (imgData.originalName ? ` - ${imgData.originalName}` : '');
 
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'item-galeria'; 
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'item-galeria'; // El contenedor ya tiene position: relative
 
-                    const lightboxLink = document.createElement('a');
-                    lightboxLink.href = viewUrl;
-                    lightboxLink.setAttribute('data-lightbox', 'clipremium-gallery'); 
-                    lightboxLink.setAttribute('data-title', title);
-                    lightboxLink.setAttribute('data-original-wasabi-url', viewUrl); 
-                    lightboxLink.setAttribute('data-original-name', fileName);
+        // --- NUEVO: Añadir el texto promocional ---
+        const promoOverlay = document.createElement('div');
+        promoOverlay.className = 'promo-overlay';
+        promoOverlay.innerHTML = '¡Prueba otro fondo!';
+        itemDiv.appendChild(promoOverlay);
+        // --- FIN DEL CÓDIGO NUEVO ---
 
-                    const imgElement = document.createElement('img');
-                    imgElement.src = viewUrl; 
-                    imgElement.alt = title;
-                    imgElement.onerror = () => { 
-                        imgElement.alt = "Error al cargar imagen"; 
-                        imgElement.style.display = 'none'; 
-                        const errorText = document.createElement('p');
-                        errorText.textContent = 'Error al cargar';
-                        errorText.style.color = 'var(--color-texto-secundario)';
-                        lightboxLink.appendChild(errorText);
-                    };
+        const lightboxLink = document.createElement('a');
+        lightboxLink.href = viewUrl;
+        lightboxLink.setAttribute('data-lightbox', 'clipremium-gallery'); 
+        lightboxLink.setAttribute('data-title', title);
+        lightboxLink.setAttribute('data-original-wasabi-url', viewUrl); 
+        lightboxLink.setAttribute('data-original-name', fileName);
 
-                    lightboxLink.appendChild(imgElement);
-                    itemDiv.appendChild(lightboxLink);
+        const imgElement = document.createElement('img');
+        imgElement.src = viewUrl; 
+        imgElement.alt = title;
+        imgElement.loading = 'lazy'; // Optimización de carga
+        imgElement.onerror = () => { 
+            imgElement.alt = "Error al cargar imagen"; 
+            imgElement.style.display = 'none'; 
+            const errorText = document.createElement('p');
+            errorText.textContent = 'Error al cargar';
+            errorText.style.color = 'var(--color-texto-secundario)';
+            lightboxLink.appendChild(errorText);
+        };
 
-                    const downloadWrapper = document.createElement('div');
-                    downloadWrapper.className = 'download-button-wrapper';
+        lightboxLink.appendChild(imgElement);
+        itemDiv.appendChild(lightboxLink);
+        
+        // El botón de descarga se mantiene igual
+        const downloadWrapper = document.createElement('div');
+        downloadWrapper.className = 'download-button-wrapper';
+        const downloadLinkElement = document.createElement('a');
+        downloadLinkElement.href = downloadUrl;
+        downloadLinkElement.className = 'download-button';
+        downloadLinkElement.setAttribute('download', fileName);
+        downloadLinkElement.innerHTML = `
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="margin-right: 8px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"></path></svg>
+            Descargar
+        `;
+        downloadWrapper.appendChild(downloadLinkElement);
+        itemDiv.appendChild(downloadWrapper);
+        
+        galleryContainer.appendChild(itemDiv);
+    });
 
-                    const downloadLinkElement = document.createElement('a');
-                    downloadLinkElement.href = downloadUrl;
-                    downloadLinkElement.className = 'download-button';
-                    downloadLinkElement.setAttribute('download', fileName);
-                    downloadLinkElement.innerHTML = `
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="margin-right: 8px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"></path></svg>
-                        Descargar
-                    `;
-                    downloadWrapper.appendChild(downloadLinkElement);
-                    itemDiv.appendChild(downloadWrapper);
-                    galleryContainer.appendChild(itemDiv);
-                });
-
-                if (typeof window.inicializarLightboxGlobal === 'function') {
-                    window.inicializarLightboxGlobal('#gallery-container-premium a[data-lightbox="clipremium-gallery"]');
-                } else {
-                    console.warn('Función global inicializarLightboxGlobal no encontrada.');
-                }
-            }
+    if (typeof window.inicializarLightboxGlobal === 'function') {
+        window.inicializarLightboxGlobal('#gallery-container-premium a[data-lightbox="clipremium-gallery"]');
+    } else {
+        console.warn('Función global inicializarLightboxGlobal no encontrada.');
+    }
+}
         });
     </script>
 </body>
