@@ -1,126 +1,40 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contacto - Jony Lager</title>
-    <link rel="stylesheet" href="css/estilo.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Libro de reclamaciones </title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <header class="site-header">
-        <div class="contenedor contenido-header">
-            <div class="logo">
-                <a href="index.html"><img src="img/logojonylager.png" alt="Logo Jony Lager"></a>
-            </div>
-            <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="navegacionPrincipalPageClipremium">
-                <span class="bar"></span><span class="bar"></span><span class="bar"></span>
-            </button>
-            <nav class="navegacion-principal" id="navegacionPrincipalPageClipremium">
-    <a href="/inicio">Inicio</a>
-    
-    <a href="/promociones">Promociones</a>
-    <a href="/clipremium">CliPremium</a>
-    <a href="/contactanos">Contáctanos</a>
-</nav>
-        </div>
-    </header>
 
-    <main class="contenedor contenido-principal">
-        <section id="seccion-contacto">
-            <h2>Ponte en Contacto</h2>
-            <p class="subtitulo-contacto">¿Tienes una pregunta o quieres reservar una sesión? Llena el formulario o escríbenos directamente a WhatsApp.</p>
+<div class="container mt-5">
+  <h1 class="text-center">Libro de reclamaciones</h1>
+  <h2 class="text-center">Ley Nº 29571, Código de Protección y Defensa del Consumidor</h2>
+  <form id="contact-form">
+    <div class="mb-3">
+      <label for="name" class="form-label">Nombre Completo:</label>
+      <input type="text" id="name" name="name" class="form-control" placeholder="Tu nombre" required>
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label">Correo Electrónico:</label>
+      <input type="email" id="email" name="email" class="form-control" placeholder="Tu correo" required>
+    </div>
+    <div class="mb-3">
+      <label for="phone" class="form-label">Teléfono:</label>
+      <input type="tel" id="phone" name="phone" class="form-control" placeholder="Tu número de teléfono" required>
+    </div>
+    <div class="mb-3">
+      <label for="message" class="form-label">Deja tu reclamo aquí:</label>
+      <textarea id="message" name="message" class="form-control" rows="4" placeholder="Escribe tu mensaje" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary w-100">Enviar Reclamo</button>
+  </form>
+</div>
 
-            <div class="contact-container">
-                <div class="contact-form-wrapper">
-                    <h3>Envíanos un Mensaje</h3>
-                    <form id="contact-form">
-                        <div class="form-group">
-                            <label for="nombre">Nombre Completo</label>
-                            <input type="text" id="nombre" name="nombre" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="correo">Correo Electrónico</label>
-                            <input type="email" id="correo" name="correo" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="telefono">Número de Teléfono (Opcional)</label>
-                            <input type="tel" id="telefono" name="telefono">
-                        </div>
-                        <div class="form-group">
-                            <label for="mensaje">Tu Mensaje</label>
-                            <textarea id="mensaje" name="mensaje" rows="6" required></textarea>
-                        </div>
-                        <button type="submit" class="submit-button">Enviar Mensaje</button>
-                        <p class="form-status"></p>
-                    </form>
-                </div>
+<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+<script src="app.js"></script>
 
-                <div class="contact-direct-wrapper">
-                    <h3>O Contáctanos Directamente</h3>
-                    <p>Haz clic en el botón para iniciar una conversación por WhatsApp. ¡Te responderemos lo antes posible!</p>
-                    <a href="https://wa.link/g94eg0" target="_blank" class="whatsapp-button">
-                        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 12c0 1.74.45 3.39 1.22 4.84l-1.28 4.68 4.79-1.25c1.39.71 2.96 1.12 4.59 1.12h.01c5.46 0 9.91-4.45 9.91-9.91s-4.45-9.91-9.91-9.91m5.22 12.5c-.28-.14-1.65-.81-1.9-.91s-.44-.14-.62.14-.72.91-.88 1.09-.32.21-.6.07c-.28-.14-1.18-.44-2.25-1.39s-1.76-1.54-1.97-1.81-.05-.41.09-.55c.13-.13.28-.34.41-.51.14-.14.18-.24.28-.41.09-.18 0-.35-.07-.49s-.62-1.5-1.13-2.07c-.27-.29-.55-.25-.76-.25h-.21c-.21 0-.55.07-.84.35s-1.1 1.07-1.1 2.6c0 1.53 1.13 3.01 1.28 3.21s2.21 3.38 5.34 4.71c.75.31 1.34.5 1.79.64.6.18 1.14.15 1.57.09.49-.07 1.65-.68 1.88-1.34s.23-1.24.16-1.36c-.07-.12-.28-.19-.55-.33"/></svg>
-                        <span>Contactar por WhatsApp</span>
-                    </a>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="site-footer">
-        <div class="contenedor contenido-footer">
-            <p>&copy; <span id="currentYear"></span> Jony Lager - Fotografía Exclusiva. Todos los derechos reservados.</p>
-            <p>Diseñado por Jonathan Encina, con pasión en Arequipa, Perú.</p> </div>
-    </footer>
-
-    <script src="js/script.js"></script>
-    <script>
-        // Este código puede ir en un archivo separado o al final de tu script.js principal
-        document.addEventListener('DOMContentLoaded', () => {
-            const contactForm = document.getElementById('contact-form');
-            const formStatus = document.querySelector('.form-status');
-
-            if(contactForm) {
-                contactForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    
-                    const submitButton = contactForm.querySelector('button[type="submit"]');
-                    const originalButtonText = submitButton.textContent;
-
-                    submitButton.disabled = true;
-                    submitButton.textContent = 'Enviando...';
-                    formStatus.textContent = '';
-                    formStatus.className = 'form-status';
-
-                    const formData = new FormData(contactForm);
-                    const data = Object.fromEntries(formData.entries());
-
-                    try {
-                        const response = await fetch('/api/enviar-formulario', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(data)
-                        });
-
-                        const result = await response.json();
-
-                        if (response.ok) {
-                            formStatus.textContent = result.message;
-                            formStatus.classList.add('success');
-                            contactForm.reset();
-                        } else {
-                            throw new Error(result.message || 'Ocurrió un error.');
-                        }
-                    } catch (error) {
-                        formStatus.textContent = `Error: ${error.message}`;
-                        formStatus.classList.add('error');
-                    } finally {
-                        submitButton.disabled = false;
-                        submitButton.textContent = originalButtonText;
-                    }
-                });
-            }
-        });
-    </script>
 </body>
 </html>
